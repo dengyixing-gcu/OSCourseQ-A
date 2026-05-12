@@ -132,9 +132,8 @@ const knowledgeBase = [
 {id:"8.6.3",section:"8.6.3",title:"分级安全管理",keywords:["分级安全管理","安全级别","多级安全","Bell-LaPadula","Biba"],content:"分级原则：高级别可访问低级别，低级别不能访问高级别。安全级别：系统级、用户级、组级、公共级。Bell-LaPadula模型（保护机密性）：不能上读、不能下写。Biba模型（保护完整性）：不能下读、不能上写。"}
 ];
 
-const apiKey = '6dcc6a860725425e825a50bc6035c4df.5lDCL9HReMFMXIXc';
-const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
-const MODEL = 'glm-4-flash';
+// 代理服务器URL - 部署后修改为你的代理服务器地址
+const PROXY_URL = 'https://os-course-qa-proxy.onrender.com';
 
 function buildContext(query) {
 const queryLower = query.toLowerCase();
@@ -163,14 +162,11 @@ const messages = [
 { role: 'system', content: context },
 { role: 'user', content: query }
 ];
-const response = await fetch(API_URL, {
+const response = await fetch(PROXY_URL + '/api/chat', {
 method: 'POST',
-headers: {
-'Authorization': 'Bearer ' + apiKey,
-'Content-Type': 'application/json'
-},
+headers: { 'Content-Type': 'application/json' },
 body: JSON.stringify({
-model: MODEL,
+model: 'glm-4-flash',
 messages: messages,
 temperature: 0.7,
 max_tokens: 2048
@@ -178,7 +174,8 @@ max_tokens: 2048
 });
 if (!response.ok) {
 if (response.status === 401) throw new Error('API Key无效');
-throw new Error('API调用失败: ' + response.status);
+if (response.status === 502) throw new Error('代理服务器连接失败');
+throw new Error('请求失败: ' + response.status);
 }
 const data = await response.json();
 return data.choices[0].message.content;

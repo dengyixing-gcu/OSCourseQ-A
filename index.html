@@ -53,15 +53,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .quick-topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
 .quick-topic{padding:6px 14px;background:#fff;border:1px solid #e8e8e8;border-radius:20px;font-size:13px;color:#666;cursor:pointer;transition:all .2s}
 .quick-topic:hover{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
-.settings-btn{margin-left:auto;cursor:pointer;font-size:20px;color:#666;padding:4px 8px;border-radius:4px}
+.settings-btn{display:none;margin-left:auto;cursor:pointer;font-size:20px;color:#666;padding:4px 8px;border-radius:4px}
 .settings-btn:hover{background:#f5f5f5}
-.settings-panel{position:fixed;top:60px;right:20px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:100;width:320px;display:none}
-.settings-panel.show{display:block}
-.settings-panel label{display:block;font-size:13px;color:#666;margin-bottom:4px}
-.settings-panel input{width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:12px}
-.settings-panel .save-btn{width:100%;padding:8px;background:#1677ff;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px}
-.settings-panel .save-btn:hover{background:#4096ff}
-.settings-panel .hint{font-size:12px;color:#999;margin-top:8px}
+.settings-panel{display:none !important}
 .loading-dots{display:inline-flex;gap:4px;align-items:center}
 .loading-dots span{width:6px;height:6px;background:#1677ff;border-radius:50%;animation:dotPulse 1.4s infinite ease-in-out both}
 .loading-dots span:nth-child(1){animation-delay:-.32s}
@@ -151,7 +145,7 @@ const knowledgeBase = [
 ];
 
 // API configuration
-let apiKey = localStorage.getItem('zhipu_api_key') || '';
+const apiKey = '6dcc6a860725425e825a50bc6035c4df.5lDCL9HReMFMXIXc';
 const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const MODEL = 'glm-4-flash';
 
@@ -180,10 +174,6 @@ return context;
 }
 
 async function callZhipuAPI(query) {
-if (!apiKey) {
-return null;
-}
-
 const context = buildContext(query);
 const messages = [
 { role: 'system', content: context },
@@ -300,11 +290,7 @@ addLoadingMessage();
 try {
 const answer = await callZhipuAPI(text);
 removeLoadingMessage();
-if (answer) {
 addSystemMessage(answer);
-} else {
-addSystemMessage('请先在设置中配置智谱AI API Key。\n\n获取方式：\n1. 访问 https://bigmodel.cn\n2. 注册并登录\n3. 在 API Keys 页面创建API Key\n4. 点击页面右上角⚙️图标，输入API Key并保存', true);
-}
 } catch (error) {
 removeLoadingMessage();
 addSystemMessage(`❌ ${error.message}`, true);
@@ -314,26 +300,12 @@ input.focus();
 }
 }
 
-function toggleSettings() {
-const panel = document.getElementById('settingsPanel');
-panel.classList.toggle('show');
-if (panel.classList.contains('show')) {
-document.getElementById('apiKeyInput').value = apiKey;
-}
-}
+document.getElementById('sendBtn').addEventListener('click', handleQuery);
+document.getElementById('userInput').addEventListener('keypress', e => {
+if (e.key === 'Enter') handleQuery();
+});
 
-function saveApiKey() {
-apiKey = document.getElementById('apiKeyInput').value.trim();
-localStorage.setItem('zhipu_api_key', apiKey);
-document.getElementById('settingsPanel').classList.remove('show');
-if (apiKey) {
-alert('API Key已保存');
-} else {
-alert('API Key已清除');
-}
-}
-
-// Disk scheduling calculator
+document.querySelectorAll('.tab').forEach(tab => {
 function calculateDiskScheduling(requests, headStart, direction, algorithm) {
 const sorted = [...requests].sort((a, b) => a - b);
 let order = [], totalMove = 0, current = headStart;
@@ -539,15 +511,6 @@ chatArea.innerHTML = `<div class="welcome">
 </div>`;
 renderQuickTopics();
 });
-});
-
-// Close settings when clicking outside
-document.addEventListener('click', function(e) {
-const panel = document.getElementById('settingsPanel');
-const btn = document.querySelector('.settings-btn');
-if (!panel.contains(e.target) && e.target !== btn) {
-panel.classList.remove('show');
-}
 });
 
 // Initialize

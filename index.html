@@ -49,13 +49,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .disk-calc button{padding:4px 12px;background:#1677ff;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:13px;margin-left:4px}
 .disk-calc .result{margin-top:8px;font-size:13px;line-height:1.6}
 .disk-calc .result table{font-size:12px}
-.no-match{color:#999;font-style:italic}
 .quick-topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
 .quick-topic{padding:6px 14px;background:#fff;border:1px solid #e8e8e8;border-radius:20px;font-size:13px;color:#666;cursor:pointer;transition:all .2s}
 .quick-topic:hover{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
-.settings-btn{display:none;margin-left:auto;cursor:pointer;font-size:20px;color:#666;padding:4px 8px;border-radius:4px}
-.settings-btn:hover{background:#f5f5f5}
-.settings-panel{display:none !important}
 .loading-dots{display:inline-flex;gap:4px;align-items:center}
 .loading-dots span{width:6px;height:6px;background:#1677ff;border-radius:50%;animation:dotPulse 1.4s infinite ease-in-out both}
 .loading-dots span:nth-child(1){animation-delay:-.32s}
@@ -72,13 +68,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 <button class="tab" data-chapter="8">文件管理</button>
 <button class="tab" data-chapter="calc">磁盘调度计算</button>
 </div>
-<span class="settings-btn" onclick="toggleSettings()" title="设置">⚙️</span>
-</div>
-<div class="settings-panel" id="settingsPanel">
-<label>智谱AI API Key</label>
-<input type="password" id="apiKeyInput" placeholder="请输入您的API Key">
-<button class="save-btn" onclick="saveApiKey()">保存</button>
-<div class="hint">API Key仅存储在浏览器本地，不会上传到任何服务器。<br>获取地址：<a href="https://bigmodel.cn/usercenter/proj-mgmt/apikeys" target="_blank">智谱AI开放平台</a></div>
 </div>
 <div class="main">
 <div class="chat-area" id="chatArea">
@@ -95,7 +84,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 </div>
 
 <script>
-// Knowledge base for context injection
 const knowledgeBase = [
 {id:"7.1.1",section:"7.1.1",title:"I/O管理的功能",keywords:["I/O管理","I/O管理功能","IO管理","输入输出管理","管理功能"],content:"I/O管理的主要功能包括：设备分配与回收、缓冲区管理、设备驱动、错误处理、提供用户接口。目标是提高I/O速度、方便用户使用、实现设备无关性。"},
 {id:"7.1.2",section:"7.1.2",title:"I/O硬件组成",keywords:["I/O硬件","I/O硬件组成","IO硬件","输入输出硬件","硬件组成"],content:"I/O系统由I/O设备、设备控制器、I/O通道、总线、I/O端口组成。I/O通信方式有专用指令I/O和内存映射I/O。"},
@@ -144,29 +132,25 @@ const knowledgeBase = [
 {id:"8.6.3",section:"8.6.3",title:"分级安全管理",keywords:["分级安全管理","安全级别","多级安全","Bell-LaPadula","Biba"],content:"分级原则：高级别可访问低级别，低级别不能访问高级别。安全级别：系统级、用户级、组级、公共级。Bell-LaPadula模型（保护机密性）：不能上读、不能下写。Biba模型（保护完整性）：不能下读、不能上写。"}
 ];
 
-// API configuration
 const apiKey = '6dcc6a860725425e825a50bc6035c4df.5lDCL9HReMFMXIXc';
 const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 const MODEL = 'glm-4-flash';
 
-// Build context from knowledge base
 function buildContext(query) {
 const queryLower = query.toLowerCase();
 const relevantKPs = knowledgeBase.filter(kp => {
-return kp.keywords.some(kw => queryLower.includes(kw.toLowerCase())) ||
-queryLower.includes(kp.title.toLowerCase());
+return kp.keywords.some(kw => queryLower.includes(kw.toLowerCase())) || queryLower.includes(kp.title.toLowerCase());
 });
-
 let context = '你是一个《操作系统》课程的知识问答助手。请根据以下知识点回答学生的问题。\n\n';
 if (relevantKPs.length > 0) {
 context += '相关知识点：\n';
 relevantKPs.slice(0, 8).forEach(kp => {
-context += `【${kp.section} ${kp.title}】${kp.content}\n\n`;
+context += '【' + kp.section + ' ' + kp.title + '】' + kp.content + '\n\n';
 });
 } else {
 context += '以下是《操作系统》课程第7章（设备管理）和第8章（文件管理）的主要知识点概要：\n';
 knowledgeBase.forEach(kp => {
-context += `【${kp.section} ${kp.title}】${kp.content.substring(0, 100)}...\n`;
+context += '【' + kp.section + ' ' + kp.title + '】' + kp.content.substring(0, 100) + '...\n';
 });
 }
 context += '\n请根据上述知识点，用清晰易懂的方式回答学生的问题。如果问题超出知识点范围，请基于操作系统课程的标准知识进行回答。回答时请包含必要的概念解释、对比分析和实例说明。';
@@ -179,11 +163,10 @@ const messages = [
 { role: 'system', content: context },
 { role: 'user', content: query }
 ];
-
 const response = await fetch(API_URL, {
 method: 'POST',
 headers: {
-'Authorization': `Bearer ${apiKey}`,
+'Authorization': 'Bearer ' + apiKey,
 'Content-Type': 'application/json'
 },
 body: JSON.stringify({
@@ -193,27 +176,23 @@ temperature: 0.7,
 max_tokens: 2048
 })
 });
-
 if (!response.ok) {
-if (response.status === 401) {
-throw new Error('API Key无效，请在设置中检查您的API Key');
+if (response.status === 401) throw new Error('API Key无效');
+throw new Error('API调用失败: ' + response.status);
 }
-throw new Error(`API调用失败: ${response.status}`);
-}
-
 const data = await response.json();
 return data.choices[0].message.content;
 }
 
-// UI logic
 let currentChapter = '7';
 const quickTopics7 = ["四种I/O控制方式比较","什么是DMA控制方式","磁盘调度算法有哪些","SPOOLing技术的作用","RAID级别有哪些","缓冲的类型"];
 const quickTopics8 = ["FCB和inode的区别","文件共享的方式","文件系统一致性","保护矩阵的实现","文件分配方法比较","目录结构类型"];
 
 function renderQuickTopics() {
 const container = document.getElementById('quickTopics');
+if (!container) return;
 const topics = currentChapter === '7' ? quickTopics7 : quickTopics8;
-container.innerHTML = topics.map(t => `<span class="quick-topic" onclick="askQuestion('${t}')">${t}</span>`).join('');
+container.innerHTML = topics.map(function(t) { return '<span class="quick-topic" onclick="askQuestion(\'' + t + '\')">' + t + '</span>'; }).join('');
 }
 
 function askQuestion(text) {
@@ -221,16 +200,13 @@ document.getElementById('userInput').value = text;
 handleQuery();
 }
 
-function addSystemMessage(content, isHtml = false) {
+function addSystemMessage(content) {
 const chatArea = document.getElementById('chatArea');
 const welcome = chatArea.querySelector('.welcome');
 if (welcome) welcome.remove();
-
 const msg = document.createElement('div');
 msg.className = 'message system';
-msg.innerHTML = `<div class="message-bubble">
-<div class="content">${isHtml ? content : formatMarkdown(content)}</div>
-</div>`;
+msg.innerHTML = '<div class="message-bubble"><div class="content">' + formatMarkdown(content) + '</div></div>';
 chatArea.appendChild(msg);
 chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -239,7 +215,7 @@ function addUserMessage(text) {
 const chatArea = document.getElementById('chatArea');
 const msg = document.createElement('div');
 msg.className = 'message user';
-msg.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
+msg.innerHTML = '<div class="message-bubble">' + escapeHtml(text) + '</div>';
 chatArea.appendChild(msg);
 chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -249,9 +225,7 @@ const chatArea = document.getElementById('chatArea');
 const msg = document.createElement('div');
 msg.className = 'message system';
 msg.id = 'loadingMsg';
-msg.innerHTML = `<div class="message-bubble">
-<div class="content"><div class="loading-dots"><span></span><span></span><span></span></div> 思考中...</div>
-</div>`;
+msg.innerHTML = '<div class="message-bubble"><div class="content"><div class="loading-dots"><span></span><span></span><span></span></div> 思考中...</div></div>';
 chatArea.appendChild(msg);
 chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -262,11 +236,7 @@ if (loading) loading.remove();
 }
 
 function formatMarkdown(text) {
-return text
-.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-.replace(/\*(.*?)\*/g, '<em>$1</em>')
-.replace(/`(.*?)`/g, '<code>$1</code>')
-.replace(/\n/g, '<br>');
+return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*(.*?)\*/g, '<em>$1</em>').replace(/`(.*?)`/g, '<code>$1</code>').replace(/\n/g, '<br>');
 }
 
 function escapeHtml(text) {
@@ -280,191 +250,102 @@ const input = document.getElementById('userInput');
 const text = input.value.trim();
 if (!text) return;
 input.value = '';
-
 const sendBtn = document.getElementById('sendBtn');
 sendBtn.disabled = true;
-
 addUserMessage(text);
 addLoadingMessage();
-
 try {
 const answer = await callZhipuAPI(text);
 removeLoadingMessage();
 addSystemMessage(answer);
 } catch (error) {
 removeLoadingMessage();
-addSystemMessage(`❌ ${error.message}`, true);
+addSystemMessage('❌ ' + error.message);
 } finally {
 sendBtn.disabled = false;
 input.focus();
 }
 }
 
-document.getElementById('sendBtn').addEventListener('click', handleQuery);
-document.getElementById('userInput').addEventListener('keypress', e => {
-if (e.key === 'Enter') handleQuery();
-});
-
-document.querySelectorAll('.tab').forEach(tab => {
-tab.addEventListener('click', function() {
-document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-this.classList.add('active');
-currentChapter = this.dataset.chapter;
-const chatArea = document.getElementById('chatArea');
-chatArea.innerHTML = '';
-
-if (currentChapter === 'calc') {
-showDiskCalc();
-return;
-}
-
-chatArea.innerHTML = `<div class="welcome">
-<h2>${currentChapter === '7' ? '设备管理' : '文件管理'}知识问答</h2>
-<p>请输入您的问题，或点击下方热门话题快速开始</p>
-<div class="quick-topics" id="quickTopics"></div>
-</div>`;
-renderQuickTopics();
-});
-});
-
-// Disk scheduling calculator
-const sorted = [...requests].sort((a, b) => a - b);
+function calculateDiskScheduling(requests, headStart, direction, algorithm) {
+const sorted = [...requests].sort(function(a, b) { return a - b; });
 let order = [], totalMove = 0, current = headStart;
 const remaining = [...requests];
-
-switch(algorithm) {
-case 'FCFS':
-order = [headStart, ...requests];
+if (algorithm === 'FCFS') {
+order = [headStart].concat(requests);
 for (let i = 1; i < order.length; i++) totalMove += Math.abs(order[i] - order[i-1]);
-break;
-case 'SSTF':
+} else if (algorithm === 'SSTF') {
 order = [headStart];
 while (remaining.length > 0) {
 let nearest = 0, minDist = Math.abs(remaining[0] - current);
-for (let i = 1; i < remaining.length; i++) {
-const dist = Math.abs(remaining[i] - current);
-if (dist < minDist) { minDist = dist; nearest = i; }
+for (let i = 1; i < remaining.length; i++) { const dist = Math.abs(remaining[i] - current); if (dist < minDist) { minDist = dist; nearest = i; } }
+current = remaining[nearest]; totalMove += minDist; order.push(current); remaining.splice(nearest, 1);
 }
-current = remaining[nearest];
-totalMove += minDist;
-order.push(current);
-remaining.splice(nearest, 1);
-}
-break;
-case 'SCAN':
+} else if (algorithm === 'SCAN') {
 order = [headStart];
 const goUp = direction === 'up';
-const left = sorted.filter(r => goUp ? r < headStart : r <= headStart).reverse();
-const right = sorted.filter(r => goUp ? r >= headStart : r > headStart);
+const left = sorted.filter(function(r) { return goUp ? r < headStart : r <= headStart; }).reverse();
+const right = sorted.filter(function(r) { return goUp ? r >= headStart : r > headStart; });
 if (goUp) {
-for (const r of right) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-const end = 200;
-if (order[order.length-1] !== end) { order.push(end); totalMove += Math.abs(end - order[order.length-2]); }
-for (const r of left) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+right.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+if (order[order.length-1] !== 200) { order.push(200); totalMove += Math.abs(200 - order[order.length-2]); }
+left.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 } else {
-for (const r of left) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+left.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 if (order[order.length-1] !== 0) { order.push(0); totalMove += Math.abs(0 - order[order.length-2]); }
-for (const r of right.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+right.reverse().forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 }
-break;
-case 'C-SCAN':
+} else if (algorithm === 'C-SCAN') {
 order = [headStart];
 const goUpC = direction === 'up';
-const leftC = sorted.filter(r => goUpC ? r < headStart : r <= headStart);
-const rightC = sorted.filter(r => goUpC ? r >= headStart : r > headStart);
+const leftC = sorted.filter(function(r) { return goUpC ? r < headStart : r <= headStart; });
+const rightC = sorted.filter(function(r) { return goUpC ? r >= headStart : r > headStart; });
 if (goUpC) {
-for (const r of rightC) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-const end = 200;
-if (order[order.length-1] !== end) { order.push(end); totalMove += Math.abs(end - order[order.length-2]); }
+rightC.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+if (order[order.length-1] !== 200) { order.push(200); totalMove += Math.abs(200 - order[order.length-2]); }
 order.push(0); totalMove += 200;
-for (const r of leftC) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+leftC.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 } else {
-for (const r of leftC.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-order.push(200); totalMove += 200;
-order.push(0);
-for (const r of rightC.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+leftC.reverse().forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+order.push(200); totalMove += 200; order.push(0);
+rightC.reverse().forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 }
-break;
-case 'LOOK':
+} else if (algorithm === 'LOOK') {
 order = [headStart];
 const goUpL = direction === 'up';
-const leftL = sorted.filter(r => goUpL ? r < headStart : r <= headStart).reverse();
-const rightL = sorted.filter(r => goUpL ? r >= headStart : r > headStart);
+const leftL = sorted.filter(function(r) { return goUpL ? r < headStart : r <= headStart; }).reverse();
+const rightL = sorted.filter(function(r) { return goUpL ? r >= headStart : r > headStart; });
 if (goUpL) {
-for (const r of rightL) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-for (const r of leftL) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+rightL.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+leftL.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 } else {
-for (const r of leftL) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-for (const r of rightL.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
+leftL.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+rightL.reverse().forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
 }
-break;
-case 'C-LOOK':
+} else if (algorithm === 'C-LOOK') {
 order = [headStart];
 const goUpCL = direction === 'up';
-const leftCL = sorted.filter(r => goUpCL ? r < headStart : r <= headStart);
-const rightCL = sorted.filter(r => goUpCL ? r >= headStart : r > headStart);
+const leftCL = sorted.filter(function(r) { return goUpCL ? r < headStart : r <= headStart; });
+const rightCL = sorted.filter(function(r) { return goUpCL ? r >= headStart : r > headStart; });
 if (goUpCL) {
-for (const r of rightCL) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-if (leftCL.length > 0) {
-const jump = Math.abs(order[order.length-1] - leftCL[0]);
-totalMove += jump;
-order.push(leftCL[0]);
-for (let i = 1; i < leftCL.length; i++) { order.push(leftCL[i]); totalMove += Math.abs(leftCL[i] - leftCL[i-1]); }
-}
+rightCL.forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+if (leftCL.length > 0) { totalMove += Math.abs(order[order.length-1] - leftCL[0]); order.push(leftCL[0]); for (let i = 1; i < leftCL.length; i++) { order.push(leftCL[i]); totalMove += Math.abs(leftCL[i] - leftCL[i-1]); } }
 } else {
-for (const r of leftCL.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
-if (rightCL.length > 0) {
-const jump = Math.abs(order[order.length-1] - rightCL[rightCL.length-1]);
-totalMove += jump;
-order.push(rightCL[rightCL.length-1]);
-for (let i = rightCL.length - 2; i >= 0; i--) { order.push(rightCL[i]); totalMove += Math.abs(rightCL[i+1] - rightCL[i]); }
+leftCL.reverse().forEach(function(r) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); });
+if (rightCL.length > 0) { totalMove += Math.abs(order[order.length-1] - rightCL[rightCL.length-1]); order.push(rightCL[rightCL.length-1]); for (let i = rightCL.length - 2; i >= 0; i--) { order.push(rightCL[i]); totalMove += Math.abs(rightCL[i+1] - rightCL[i]); } }
 }
 }
-break;
-}
-return { order, totalMove };
+return { order: order, totalMove: totalMove };
 }
 
 function showDiskCalc() {
 const chatArea = document.getElementById('chatArea');
 const welcome = chatArea.querySelector('.welcome');
 if (welcome) welcome.remove();
-
 const msg = document.createElement('div');
 msg.className = 'message system';
 msg.id = 'diskCalcMsg';
-msg.innerHTML = `<div class="message-bubble">
-<div class="title">磁盘调度算法计算器</div>
-<div class="content">
-<p>请输入磁盘访问序列和参数，选择算法查看调度过程和总移动距离。</p>
-<div class="disk-calc">
-<h4>参数设置</h4>
-<div>
-<label>访问序列（逗号分隔）：</label>
-<input type="text" id="dcRequests" value="98, 183, 37, 122, 14, 124, 65, 67" style="width:300px">
-</div>
-<div style="margin-top:6px">
-<label>磁头起始位置：</label>
-<input type="number" id="dcHead" value="53" style="width:60px">
-<label style="margin-left:12px">移动方向：</label>
-<select id="dcDirection">
-<option value="up">向大号方向（递增）</option>
-<option value="down">向小号方向（递减）</option>
-</select>
-</div>
-<div style="margin-top:8px">
-<button onclick="runDiskCalc('FCFS')">FCFS</button>
-<button onclick="runDiskCalc('SSTF')">SSTF</button>
-<button onclick="runDiskCalc('SCAN')">SCAN</button>
-<button onclick="runDiskCalc('C-SCAN')">C-SCAN</button>
-<button onclick="runDiskCalc('LOOK')">LOOK</button>
-<button onclick="runDiskCalc('C-LOOK')">C-LOOK</button>
-<button onclick="runDiskCalc('ALL')" style="background:#52c41a">全部对比</button>
-</div>
-<div id="dcResult" class="result"></div>
-</div>
-</div>
-</div>`;
+msg.innerHTML = '<div class="message-bubble"><div class="title">磁盘调度算法计算器</div><div class="content"><p>请输入磁盘访问序列和参数，选择算法查看调度过程和总移动距离。</p><div class="disk-calc"><h4>参数设置</h4><div><label>访问序列（逗号分隔）：</label><input type="text" id="dcRequests" value="98, 183, 37, 122, 14, 124, 65, 67" style="width:300px"></div><div style="margin-top:6px"><label>磁头起始位置：</label><input type="number" id="dcHead" value="53" style="width:60px"><label style="margin-left:12px">移动方向：</label><select id="dcDirection"><option value="up">向大号方向（递增）</option><option value="down">向小号方向（递减）</option></select></div><div style="margin-top:8px"><button onclick="runDiskCalc(\'FCFS\')">FCFS</button> <button onclick="runDiskCalc(\'SSTF\')">SSTF</button> <button onclick="runDiskCalc(\'SCAN\')">SCAN</button> <button onclick="runDiskCalc(\'C-SCAN\')">C-SCAN</button> <button onclick="runDiskCalc(\'LOOK\')">LOOK</button> <button onclick="runDiskCalc(\'C-LOOK\')">C-LOOK</button> <button onclick="runDiskCalc(\'ALL\')" style="background:#52c41a">全部对比</button></div><div id="dcResult" class="result"></div></div></div></div>';
 chatArea.appendChild(msg);
 chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -473,68 +354,46 @@ function runDiskCalc(algorithm) {
 const requestsStr = document.getElementById('dcRequests').value;
 const headStart = parseInt(document.getElementById('dcHead').value);
 const direction = document.getElementById('dcDirection').value;
-const requests = requestsStr.split(/[,，\s]+/).map(s => parseInt(s.trim())).filter(n => !isNaN(n));
-
-if (requests.length === 0) {
-document.getElementById('dcResult').innerHTML = '<p style="color:red">请输入有效的访问序列</p>';
-return;
-}
-
+const requests = requestsStr.split(/[,，\s]+/).map(function(s) { return parseInt(s.trim()); }).filter(function(n) { return !isNaN(n); });
+if (requests.length === 0) { document.getElementById('dcResult').innerHTML = '<p style="color:red">请输入有效的访问序列</p>'; return; }
 const resultDiv = document.getElementById('dcResult');
-
 if (algorithm === 'ALL') {
 const algorithms = ['FCFS', 'SSTF', 'SCAN', 'C-SCAN', 'LOOK', 'C-LOOK'];
 let html = '<table><tr><th>算法</th><th>访问顺序</th><th>总移动距离</th></tr>';
-algorithms.forEach(algo => {
+algorithms.forEach(function(algo) {
 const result = calculateDiskScheduling(requests, headStart, direction, algo);
-html += `<tr><td><strong>${algo}</strong></td><td>${result.order.join(' → ')}</td><td><strong>${result.totalMove}</strong></td></tr>`;
+html += '<tr><td><strong>' + algo + '</strong></td><td>' + result.order.join(' → ') + '</td><td><strong>' + result.totalMove + '</strong></td></tr>';
 });
 html += '</table>';
 resultDiv.innerHTML = html;
 } else {
 const result = calculateDiskScheduling(requests, headStart, direction, algorithm);
 const algoNames = {FCFS:'先来先服务',SSTF:'最短寻道时间优先',SCAN:'扫描算法(电梯)',LOOK:'LOOK算法','C-SCAN':'循环扫描','C-LOOK':'循环LOOK'};
-let html = `<p><strong>算法：</strong>${algoNames[algorithm] || algorithm}</p>`;
-html += `<p><strong>访问顺序：</strong>${result.order.join(' → ')}</p>`;
-
+let html = '<p><strong>算法：</strong>' + (algoNames[algorithm] || algorithm) + '</p>';
+html += '<p><strong>访问顺序：</strong>' + result.order.join(' → ') + '</p>';
 let moveDetails = [];
-for (let i = 1; i < result.order.length; i++) {
-const move = Math.abs(result.order[i] - result.order[i-1]);
-moveDetails.push(`${result.order[i-1]}→${result.order[i]}: ${move}`);
-}
-html += `<p><strong>移动过程：</strong></p><pre>${moveDetails.join('\n')}\n总移动距离: ${result.totalMove}</pre>`;
+for (let i = 1; i < result.order.length; i++) { const move = Math.abs(result.order[i] - result.order[i-1]); moveDetails.push(result.order[i-1] + '→' + result.order[i] + ': ' + move); }
+html += '<p><strong>移动过程：</strong></p><pre>' + moveDetails.join('\n') + '\n总移动距离: ' + result.totalMove + '</pre>';
 resultDiv.innerHTML = html;
 }
 }
 
 document.getElementById('sendBtn').addEventListener('click', handleQuery);
-document.getElementById('userInput').addEventListener('keypress', e => {
-if (e.key === 'Enter') handleQuery();
-});
+document.getElementById('userInput').addEventListener('keypress', function(e) { if (e.key === 'Enter') handleQuery(); });
 
-document.querySelectorAll('.tab').forEach(tab => {
+document.querySelectorAll('.tab').forEach(function(tab) {
 tab.addEventListener('click', function() {
-document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
 this.classList.add('active');
 currentChapter = this.dataset.chapter;
 const chatArea = document.getElementById('chatArea');
 chatArea.innerHTML = '';
-
-if (currentChapter === 'calc') {
-showDiskCalc();
-return;
-}
-
-chatArea.innerHTML = `<div class="welcome">
-<h2>${currentChapter === '7' ? '设备管理' : '文件管理'}知识问答</h2>
-<p>请输入您的问题，或点击下方热门话题快速开始</p>
-<div class="quick-topics" id="quickTopics"></div>
-</div>`;
+if (currentChapter === 'calc') { showDiskCalc(); return; }
+chatArea.innerHTML = '<div class="welcome"><h2>' + (currentChapter === '7' ? '设备管理' : '文件管理') + '知识问答</h2><p>请输入您的问题，或点击下方热门话题快速开始</p><div class="quick-topics" id="quickTopics"></div></div>';
 renderQuickTopics();
 });
 });
 
-// Initialize
 renderQuickTopics();
 </script>
 </body>

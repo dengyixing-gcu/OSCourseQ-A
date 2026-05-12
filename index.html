@@ -42,6 +42,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .input-area button{padding:10px 24px;background:#1677ff;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;transition:background .2s}
 .input-area button:hover{background:#4096ff}
 .input-area button:active{background:#0958d9}
+.input-area button:disabled{background:#d9d9d9;cursor:not-allowed}
 .disk-calc{background:#f9fafb;border:1px solid #e8e8e8;border-radius:8px;padding:12px;margin-top:10px}
 .disk-calc h4{font-size:14px;color:#1a1a1a;margin-bottom:8px}
 .disk-calc input,.disk-calc select{padding:4px 8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin:2px}
@@ -52,6 +53,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 .quick-topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;justify-content:center}
 .quick-topic{padding:6px 14px;background:#fff;border:1px solid #e8e8e8;border-radius:20px;font-size:13px;color:#666;cursor:pointer;transition:all .2s}
 .quick-topic:hover{border-color:#1677ff;color:#1677ff;background:#e6f4ff}
+.settings-btn{margin-left:auto;cursor:pointer;font-size:20px;color:#666;padding:4px 8px;border-radius:4px}
+.settings-btn:hover{background:#f5f5f5}
+.settings-panel{position:fixed;top:60px;right:20px;background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:16px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:100;width:320px;display:none}
+.settings-panel.show{display:block}
+.settings-panel label{display:block;font-size:13px;color:#666;margin-bottom:4px}
+.settings-panel input{width:100%;padding:8px;border:1px solid #d9d9d9;border-radius:4px;font-size:13px;margin-bottom:12px}
+.settings-panel .save-btn{width:100%;padding:8px;background:#1677ff;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:14px}
+.settings-panel .save-btn:hover{background:#4096ff}
+.settings-panel .hint{font-size:12px;color:#999;margin-top:8px}
+.loading-dots{display:inline-flex;gap:4px;align-items:center}
+.loading-dots span{width:6px;height:6px;background:#1677ff;border-radius:50%;animation:dotPulse 1.4s infinite ease-in-out both}
+.loading-dots span:nth-child(1){animation-delay:-.32s}
+.loading-dots span:nth-child(2){animation-delay:-.16s}
+@keyframes dotPulse{0%,80%,100%{transform:scale(0)}40%{transform:scale(1)}}
 @media(max-width:768px){.header h1{font-size:16px;margin-right:16px}.message-bubble{max-width:95%}.input-area{padding:12px 16px}}
 </style>
 </head>
@@ -63,6 +78,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 <button class="tab" data-chapter="8">文件管理</button>
 <button class="tab" data-chapter="calc">磁盘调度计算</button>
 </div>
+<span class="settings-btn" onclick="toggleSettings()" title="设置">⚙️</span>
+</div>
+<div class="settings-panel" id="settingsPanel">
+<label>智谱AI API Key</label>
+<input type="password" id="apiKeyInput" placeholder="请输入您的API Key">
+<button class="save-btn" onclick="saveApiKey()">保存</button>
+<div class="hint">API Key仅存储在浏览器本地，不会上传到任何服务器。<br>获取地址：<a href="https://bigmodel.cn/usercenter/proj-mgmt/apikeys" target="_blank">智谱AI开放平台</a></div>
 </div>
 <div class="main">
 <div class="chat-area" id="chatArea">
@@ -79,1089 +101,241 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 </div>
 
 <script>
+// Knowledge base for context injection
 const knowledgeBase = [
-// ==================== 第7章 设备管理 ====================
-{
-id:"7.1.1",section:"7.1.1",title:"I/O管理的功能",
-keywords:["I/O管理","I/O管理功能","IO管理","输入输出管理","io管理功能"],
-synonyms:["io的功能","输入输出管理功能","io管理做什么","操作系统io管理","io管理的任务"],
-content:`<p>I/O管理是操作系统的重要组成部分，其主要功能包括：</p>
-<ul>
-<li><strong>设备分配与回收</strong>：根据用户的I/O请求，按照一定的策略为进程分配所需的设备，使用完毕后回收设备资源。</li>
-<li><strong>缓冲区管理</strong>：管理内存中的缓冲区，用于缓和CPU与I/O设备速度不匹配的矛盾，提高系统的并行性。</li>
-<li><strong>设备驱动</strong>：为用户进程提供统一的设备操作接口，隐藏底层硬件的细节，实现设备的无关性。</li>
-<li><strong>错误处理</strong>：处理I/O操作中可能出现的各种错误和异常情况，保证系统的可靠性。</li>
-<li><strong>提供用户接口</strong>：向用户提供方便使用的系统调用接口，使用户能够方便地进行I/O操作。</li>
-</ul>
-<p><strong>I/O管理的目标：</strong>提高I/O速度、方便用户使用、实现设备无关性。</p>
-<p><strong>设备无关性</strong>是指用户程序使用的设备与实际物理设备无关，操作系统负责将逻辑设备映射到物理设备。</p>`
-},
-{
-id:"7.1.2",section:"7.1.2",title:"I/O硬件组成",
-keywords:["I/O硬件","I/O硬件组成","IO硬件","输入输出硬件","i/o硬件"],
-synonyms:["io硬件组成","输入输出硬件","io的硬件","i/o硬件组成","计算机io硬件","io系统硬件"],
-content:`<p>I/O系统由以下硬件组成：</p>
-<ul>
-<li><strong>I/O设备</strong>：包括输入设备（键盘、鼠标、扫描仪等）、输出设备（显示器、打印机等）和存储设备（磁盘、磁带等）。</li>
-<li><strong>设备控制器</strong>：是I/O设备与CPU之间的接口，负责控制一个或多个I/O设备，实现数据缓冲、错误检测、数据格式转换等功能。设备控制器由机械组件和电子组件组成，电子组件即为控制器本身。</li>
-<li><strong>I/O通道</strong>：是一种特殊的处理器，专门负责I/O操作，可以独立于CPU执行I/O指令，进一步减轻CPU负担。</li>
-<li><strong>总线</strong>：连接CPU、内存和I/O设备的通信线路，包括数据总线、地址总线和控制总线。</li>
-<li><strong>I/O端口</strong>：设备控制器中的寄存器，CPU通过读写这些寄存器来控制I/O设备。</li>
-</ul>
-<p><strong>I/O通信方式：</strong></p>
-<ul>
-<li><strong>专用指令I/O</strong>：使用专门控制I/O设备的CPU指令，适用于简单设备。</li>
-<li><strong>内存映射I/O</strong>：内存和I/O设备共享同一地址空间，适用于高速设备（磁盘、通信接口）。</li>
-</ul>
-<p>这些硬件组件协同工作，实现了CPU与外部设备之间的数据传输。</p>`
-},
-{
-id:"7.1.3",section:"7.1.3",title:"I/O设备",
-keywords:["I/O设备","IO设备","输入输出设备","设备分类","块设备","字符设备"],
-synonyms:["io设备分类","输入输出设备类型","io设备有哪些","外设","外部设备","io设备类型"],
-content:`<p>I/O设备可以从多个角度进行分类：</p>
-<p><strong>按使用特性分类：</strong></p>
-<ul>
-<li><strong>存储型设备</strong>：磁盘、磁带、光盘等，用于数据存储。</li>
-<li><strong>输入/输出型设备</strong>：键盘、鼠标、显示器、打印机等。</li>
-<li><strong>交互型设备</strong>：终端设备，支持人机交互。</li>
-</ul>
-<p><strong>按传输速率分类：</strong></p>
-<ul>
-<li><strong>低速设备</strong>：键盘、鼠标等（每秒几个字节）。</li>
-<li><strong>中速设备</strong>：打印机、显示器等（每秒几百到几千字节）。</li>
-<li><strong>高速设备</strong>：磁盘、光盘、网络接口等（每秒几MB到几GB）。</li>
-</ul>
-<p><strong>按信息交换单位分类：</strong></p>
-<ul>
-<li><strong>块设备 (Block Device)</strong>：以数据块为单位传输，如磁盘、USB存储。支持随机访问，数据以固定大小的块进行读写。</li>
-<li><strong>字符设备 (Character Device)</strong>：以字符（字节）为单位传输，如键盘、串口、打印机。数据按流式处理，不支持随机访问。</li>
-</ul>
-<p><strong>按资源分配角度分类：</strong></p>
-<ul>
-<li><strong>独占设备</strong>：一段时间内只允许一个进程使用，如打印机。</li>
-<li><strong>共享设备</strong>：允许多个进程同时使用，如磁盘。</li>
-<li><strong>虚拟设备</strong>：通过SPOOLing技术将独占设备模拟为共享设备。</li>
-</ul>`
-},
-{
-id:"7.1.4",section:"7.1.4",title:"设备控制器",
-keywords:["设备控制器","控制器","Device Controller","设备控制"],
-synonyms:["io控制器","设备控制器的作用","控制器的功能","什么是设备控制器","设备控制器是什么","device controller"],
-content:`<p>设备控制器是CPU与I/O设备之间的接口部件，是设备驱动程序与硬件之间的桥梁。</p>
-<p><strong>设备控制器的主要功能：</strong></p>
-<ul>
-<li><strong>接收和识别命令</strong>：接收CPU发来的命令，识别并执行相应的操作。</li>
-<li><strong>数据交换</strong>：在CPU和I/O设备之间传输数据，提供数据缓冲功能。</li>
-<li><strong>设备状态报告</strong>：向CPU报告设备的当前状态（忙、闲、出错等）。</li>
-<li><strong>地址识别</strong>：识别所控制的每个设备的地址，确保数据传送到正确的设备。</li>
-<li><strong>数据缓冲</strong>：设置缓冲区来缓和CPU与I/O设备之间的速度差异。</li>
-<li><strong>差错控制</strong>：检测并纠正传输过程中可能出现的错误，将串行比特流转换为字节块。</li>
-</ul>
-<p><strong>设备控制器的组成：</strong></p>
-<ul>
-<li><strong>命令寄存器</strong>：存放CPU发来的I/O命令。</li>
-<li><strong>状态寄存器</strong>：存放设备和控制器的状态信息。</li>
-<li><strong>数据寄存器</strong>：用于CPU和设备之间交换数据。</li>
-<li><strong>控制逻辑</strong>：实现命令解析、数据传输控制等功能。</li>
-</ul>
-<p>一个控制器可以控制多个同类设备。设备由机械组件和电子组件组成，电子组件即为设备控制器。</p>`
-},
-{
-id:"7.1.5",section:"7.1.5",title:"设备通道",
-keywords:["设备通道","通道","I/O通道","IO通道","通道处理器","channel"],
-synonyms:["什么是通道","通道的作用","io通道是什么","通道处理器","通道控制","通道类型"],
-content:`<p>设备通道（I/O通道）是一种特殊的处理器，专门用于控制I/O操作。</p>
-<p><strong>通道的主要特点：</strong></p>
-<ul>
-<li>通道可以独立于CPU执行I/O操作，实现CPU与I/O设备的并行工作。</li>
-<li>通道执行存储在内存中的<strong>通道程序</strong>，由CPU启动后自动运行。</li>
-<li>通道完成I/O操作后，通过中断通知CPU。</li>
-<li>通道有自己的指令系统，可以执行复杂的I/O操作。</li>
-</ul>
-<p><strong>通道的三种类型：</strong></p>
-<ul>
-<li><strong>字节多路通道</strong>：以字节为单位传输数据，适用于低速设备。采用分时方式为多个设备服务，多个设备交替使用通道。</li>
-<li><strong>数组选择通道</strong>：以数组（数据块）为单位传输数据，适用于高速设备。一段时间内只服务于一台设备，执行一个通道程序。</li>
-<li><strong>数组多路通道</strong>：结合了前两者的特点，可以分时为多台高速设备服务。既有较高的数据传输速率，又能同时为多个设备服务。</li>
-</ul>
-<p><strong>通道的工作流程：</strong>CPU执行I/O指令启动通道 → 通道执行通道程序 → 通道与设备通信完成数据传输 → 通道向CPU发出中断请求。</p>`
-},
-{
-id:"7.2.1",section:"7.2.1",title:"程序直接控制方式",
-keywords:["程序直接控制","程序查询","轮询","忙等待","程序直接控制方式","programmed io","polling"],
-synonyms:["程序查询方式","轮询方式","忙等待方式","polling","程序控制io","程序直接控制io","什么是程序直接控制","轮询io"],
-content:`<p>程序直接控制方式（也称程序查询方式或轮询方式 Polling）是最简单的I/O控制方式。</p>
-<p><strong>工作原理：</strong></p>
-<ul>
-<li>CPU启动I/O设备后，不断循环查询设备状态寄存器，等待I/O操作完成。</li>
-<li>在等待期间，CPU处于"忙等待"（Busy Waiting）状态，不能执行其他任务。</li>
-<li>I/O操作完成后，CPU从设备读取数据或向其写入数据。</li>
-<li>重复上述过程直到所有数据传输完成。</li>
-</ul>
-<p><strong>优点：</strong></p>
-<ul>
-<li>实现简单，硬件要求低。</li>
-<li>不需要额外的中断机制或DMA控制器。</li>
-</ul>
-<p><strong>缺点：</strong></p>
-<ul>
-<li>CPU利用率极低，大部分时间浪费在等待上。</li>
-<li>CPU和外设只能串行工作，不能并行。</li>
-<li>不能及时发现和处理设备异常。</li>
-<li>仅适用于简单低速设备和小数据量传输。</li>
-</ul>
-<p><strong>典型应用：</strong>简单传感器、LED控制、基本显示器等低速设备。</p>`
-},
-{
-id:"7.2.2",section:"7.2.2",title:"中断控制方式",
-keywords:["中断控制","中断","中断控制方式","interrupt","中断驱动"],
-synonyms:["中断方式","interrupt方式","中断io","中断控制io","什么是中断控制","中断驱动io"],
-content:`<p>中断控制方式（Interrupt-Initiated I/O）通过中断机制来改善CPU利用率。</p>
-<p><strong>工作原理：</strong></p>
-<ul>
-<li>CPU启动I/O设备后，继续执行其他进程，不再等待。</li>
-<li>I/O设备完成操作后，向CPU发出中断请求。</li>
-<li>CPU响应中断，暂停当前进程，保存现场（寄存器内容、程序计数器等）。</li>
-<li>转去执行中断处理程序（ISR），完成数据传输。</li>
-<li>中断处理完成后，恢复现场，继续执行被中断的进程。</li>
-</ul>
-<p><strong>优点：</strong></p>
-<ul>
-<li>CPU与I/O设备可以并行工作，提高了CPU利用率。</li>
-<li>可以及时响应I/O设备的请求。</li>
-<li>适用于键盘、鼠标、串口等中速设备。</li>
-</ul>
-<p><strong>缺点：</strong></p>
-<ul>
-<li>每次中断只能传输少量数据（通常是一个字或字节）。</li>
-<li>高速I/O设备频繁中断CPU，中断开销大。</li>
-<li>中断处理需要保存和恢复现场，增加了额外开销。</li>
-<li>每个字节/字的传输都需要一次中断，对于大数据量传输效率低下。</li>
-</ul>
-<p><strong>中断处理程序（ISR）的工作流程：</strong>保存现场 → 分析中断原因 → 执行中断服务例程 → 更新数据结构 → 唤醒等待进程 → 恢复现场。</p>`
-},
-{
-id:"7.2.3",section:"7.2.3",title:"DMA控制方式",
-keywords:["DMA","DMA控制","DMA控制方式","直接存储器访问","Direct Memory Access","dma控制器"],
-synonyms:["dma方式","直接内存访问","直接存储器访问方式","dma控制io","什么是dma","dma是什么","dma传输"],
-content:`<p>DMA（Direct Memory Access，直接存储器访问）控制方式允许I/O设备与内存之间直接进行数据传输，无需CPU干预。</p>
-<p><strong>DMA控制器的组成：</strong></p>
-<ul>
-<li><strong>地址寄存器</strong>：存储数据读/写的内存地址。</li>
-<li><strong>数据寄存器</strong>：临时存储传输中的数据。</li>
-<li><strong>控制逻辑</strong>：管理传输过程、接收CPU命令、处理信号。</li>
-<li><strong>计数寄存器</strong>：跟踪剩余传输字节数，计数为0时传输完成。</li>
-<li><strong>控制寄存器</strong>：指定传输模式、方向和其他参数。</li>
-</ul>
-<p><strong>工作流程：</strong></p>
-<ul>
-<li>CPU配置DMA控制器（内存地址、I/O设备、传输大小）。</li>
-<li>I/O设备准备好数据后向DMA控制器发送请求。</li>
-<li>DMA控制器向CPU请求总线控制权。</li>
-<li>CPU授予总线控制权后，DMA直接在内存和I/O设备间传输数据。</li>
-<li>传输完成后，DMA将总线控制权交还CPU并发出中断信号。</li>
-</ul>
-<p><strong>DMA传输模式：</strong></p>
-<ul>
-<li><strong>突发模式 (Burst Mode)</strong>：一次性传输完整数据块，速度最快但独占总线。</li>
-<li><strong>周期窃取模式 (Cycle Stealing)</strong>：每次传输一个字节/字后释放总线，平衡CPU和设备需求。</li>
-<li><strong>透明模式 (Transparent Mode)</strong>：仅在CPU不使用总线时传输，最慢但不影响CPU。</li>
-</ul>
-<p><strong>与中断控制方式的区别：</strong>中断方式每传输一个数据单元就要中断一次CPU；DMA方式只在传输开始和结束时与CPU交互，中间的数据传输由DMA控制器独立完成。</p>
-<p><strong>优点：</strong>大大减少了中断次数，降低了CPU开销；适用于高速I/O设备（如磁盘）的大批量数据传输。</p>
-<p><strong>缺点：</strong>需要额外硬件（DMA控制器），成本高；DMA占用总线时可能减慢CPU操作；不适合小数据传输。</p>`
-},
-{
-id:"7.2.4",section:"7.2.4",title:"通道控制方式",
-keywords:["通道控制","通道控制方式","channel","通道io"],
-synonyms:["通道方式","channel方式","通道控制io","通道程序","什么是通道控制","通道类型"],
-content:`<p>通道控制方式是I/O控制的最高级形式，进一步减少了CPU的干预。</p>
-<p><strong>工作原理：</strong></p>
-<ul>
-<li>CPU只需执行一条I/O指令启动通道，指定通道程序在内存中的位置。</li>
-<li>通道独立执行通道程序，控制I/O设备完成数据传输。</li>
-<li>通道程序执行完毕后，通道向CPU发出中断请求。</li>
-</ul>
-<p><strong>与DMA方式的区别：</strong></p>
-<ul>
-<li>DMA控制器只能执行简单的数据传输操作。</li>
-<li>通道可以执行更复杂的通道程序，支持条件转移、数据转换等操作。</li>
-<li>一个通道可以控制多个设备，实现更灵活的I/O调度。</li>
-<li>通道有自己的指令系统，是功能更强的专用处理器。</li>
-</ul>
-<p><strong>优点：</strong></p>
-<ul>
-<li>CPU干预最少，CPU利用率最高。</li>
-<li>可以实现CPU、通道、I/O设备三者的并行工作。</li>
-<li>支持复杂的I/O操作和错误处理。</li>
-</ul>
-<p><strong>I/O控制方式的发展脉络：</strong>程序直接控制 → 中断控制 → DMA → 通道，CPU干预程度逐渐降低，系统并行性逐渐提高。</p>
-<table>
-<tr><th>比较项</th><th>程序直接控制</th><th>中断驱动</th><th>DMA</th><th>通道</th></tr>
-<tr><td>CPU参与程度</td><td>全程参与</td><td>每字节/字参与</td><td>开始和结束参与</td><td>仅初始配置</td></tr>
-<tr><td>数据传输单位</td><td>字节/字</td><td>字节/字</td><td>数据块</td><td>数据块组</td></tr>
-<tr><td>中断次数</td><td>无</td><td>每字节/字一次</td><td>每块一次</td><td>每组一次</td></tr>
-<tr><td>CPU效率</td><td>最低</td><td>中等</td><td>高</td><td>最高</td></tr>
-<tr><td>硬件成本</td><td>最低</td><td>低</td><td>中等</td><td>最高</td></tr>
-</table>`
-},
-{
-id:"7.3.1",section:"7.3.1",title:"I/O软件层次结构",
-keywords:["I/O软件层次","I/O软件","io软件层次","io软件结构","设备无关层"],
-synonyms:["io软件分层","io软件层次结构","设备无关io软件","io软件的四层结构"],
-content:`<p>I/O软件通常分为四个层次，从上到下依次为：</p>
-<ul>
-<li><strong>用户层I/O软件</strong>：提供用户程序使用的I/O接口，如C语言的stdio库（printf、scanf等）。负责将高级I/O调用转换为系统调用。</li>
-<li><strong>设备无关的操作系统软件</strong>：提供统一的I/O接口，实现设备无关性。功能包括：设备命名、保护、缓冲、统一块大小、错误报告等。这一层对用户屏蔽了不同设备的差异。</li>
-<li><strong>设备驱动程序</strong>：与具体设备相关的代码，负责将设备无关层的抽象命令转换为设备控制器能理解的命令。每个设备有对应的驱动程序。</li>
-<li><strong>中断处理程序</strong>：处理I/O设备发出的中断请求，完成数据传输的后续工作。是操作系统与硬件之间的最底层接口。</li>
-</ul>
-<p><strong>层次间的关系：</strong>上层调用下层的服务，下层向上层提供接口。每一层只与相邻层交互，实现了模块化和可维护性。</p>`
-},
-{
-id:"7.3.2",section:"7.3.2",title:"设备分配",
-keywords:["设备分配","设备分配策略","设备分配方式","独占设备","共享设备","虚拟设备","设备分配步骤"],
-synonyms:["设备如何分配","设备分配算法","什么是设备分配","设备分配的原则","设备分配过程"],
-content:`<p>设备分配是操作系统根据进程请求为其分配I/O设备的过程。</p>
-<p><strong>设备分类与分配策略：</strong></p>
-<ul>
-<li><strong>独占设备</strong>：一段时间内只允许一个进程使用，如打印机。分配不当可能导致死锁。可采用静态分配（预防死锁）或动态分配（提高利用率）。</li>
-<li><strong>共享设备</strong>：允许多个进程同时使用，如磁盘。不会导致死锁，但需要合理的调度策略。</li>
-<li><strong>虚拟设备</strong>：通过SPOOLing技术将独占设备模拟为共享设备。</li>
-</ul>
-<p><strong>设备分配中的数据结构：</strong></p>
-<ul>
-<li><strong>设备控制表（DCT）</strong>：记录设备类型、状态、等待队列等信息。</li>
-<li><strong>控制器控制表（COCT）</strong>：记录控制器信息。</li>
-<li><strong>通道控制表（CHCT）</strong>：记录通道信息。</li>
-<li><strong>系统设备表（SDT）</strong>：记录系统中所有设备的信息。</li>
-</ul>
-<p><strong>设备分配步骤：</strong>分配设备 → 分配控制器 → 分配通道 → 启动设备。</p>
-<p><strong>分配策略：</strong></p>
-<ul>
-<li><strong>静态分配</strong>：进程运行前一次性分配所需设备，可预防死锁但资源利用率低。</li>
-<li><strong>动态分配</strong>：进程运行过程中按需分配设备，资源利用率高但可能导致死锁。</li>
-</ul>`
-},
-{
-id:"7.3.3",section:"7.3.3",title:"SPOOLing技术",
-keywords:["SPOOLing","假脱机","SPOOLing技术","虚拟设备","Simultaneous Peripheral Operations On-Line"],
-synonyms:["什么是spooling","spooling是什么","假脱机技术","spooling的作用","spooling技术的作用","虚拟设备技术","spooling原理"],
-content:`<p>SPOOLing（Simultaneous Peripheral Operations On-Line，外部设备联机并行操作）技术是一种虚拟设备技术。</p>
-<p><strong>核心思想：</strong>利用磁盘作为缓冲，将独占设备改造为共享设备，实现I/O操作与CPU执行的并行。</p>
-<p><strong>SPOOLing系统的组成：</strong></p>
-<ul>
-<li><strong>输入井和输出井</strong>：在磁盘上开辟的区域，分别模拟输入设备和输出设备。</li>
-<li><strong>输入缓冲区和输出缓冲区</strong>：在内存中开辟的区域，用于暂存数据。</li>
-<li><strong>输入进程和输出进程</strong>：模拟I/O操作，负责数据在设备与井之间的传输。</li>
-<li><strong>井管理程序</strong>：管理用户进程对井的读写请求。</li>
-</ul>
-<p><strong>工作过程（以打印为例）：</strong></p>
-<ul>
-<li>用户进程将打印数据输出到磁盘的输出井，而非直接发送给打印机。</li>
-<li>SPOOLing输出进程在后台从输出井取出数据，发送给打印机打印。</li>
-<li>多个用户进程可以同时向输出井写入数据，实现"共享"打印机。</li>
-</ul>
-<p><strong>SPOOLing vs Buffering 的区别：</strong></p>
-<table>
-<tr><th>比较项</th><th>SPOOLing</th><th>Buffering</th></tr>
-<tr><td>存储位置</td><td>磁盘（大容量）</td><td>主存/RAM（有限）</td></tr>
-<tr><td>并行性</td><td>一个作业的I/O与另一个作业的执行重叠</td><td>同一作业的I/O与执行重叠</td></tr>
-<tr><td>效率</td><td>更高（支持多作业同时处理）</td><td>较低</td></tr>
-<tr><td>远程处理</td><td>支持</td><td>不支持</td></tr>
-</table>
-<p><strong>优点：</strong>提高了I/O速度、实现了虚拟设备、提高了设备利用率、改善了系统性能。</p>`
-},
-{
-id:"7.3.4",section:"7.3.4",title:"设备驱动程序",
-keywords:["设备驱动程序","驱动程序","Device Driver","driver","设备驱动"],
-synonyms:["什么是驱动程序","驱动的作用","driver是什么","设备驱动程序的功能","设备驱动的作用"],
-content:`<p>设备驱动程序是操作系统内核中直接与硬件交互的软件模块。</p>
-<p><strong>驱动程序的功能：</strong></p>
-<ul>
-<li>接收上层软件（与设备无关的I/O软件）传来的抽象命令。</li>
-<li>将抽象命令转换为具体设备能够理解的命令序列。</li>
-<li>检查设备状态，处理设备错误。</li>
-<li>控制设备完成实际的I/O操作。</li>
-</ul>
-<p><strong>驱动程序的运行方式：</strong></p>
-<ul>
-<li>作为内核的一部分，在内核态运行。</li>
-<li>可以被进程直接调用，也可以由中断处理程序调用。</li>
-<li>请求到达时，若驱动程序空闲则立即执行；若忙则放入等待队列。</li>
-</ul>
-<p><strong>驱动程序的特点：</strong></p>
-<ul>
-<li>每个设备有对应的驱动程序，驱动程序与硬件紧密相关。</li>
-<li>驱动程序向上提供统一接口，实现设备无关性。</li>
-<li>驱动程序通常包含初始化、读写、中断处理等函数。</li>
-</ul>`
-},
-{
-id:"7.3.5",section:"7.3.5",title:"中断处理程序",
-keywords:["中断处理程序","中断处理","Interrupt Handler","中断服务程序","ISR"],
-synonyms:["中断处理流程","什么是中断处理","中断服务程序","interrupt handler","中断处理的作用","中断处理过程"],
-content:`<p>中断处理程序是操作系统内核中响应和处理中断的软件模块。</p>
-<p><strong>中断处理过程：</strong></p>
-<ul>
-<li><strong>保存现场</strong>：保存被中断进程的CPU状态（寄存器内容、程序计数器等）。</li>
-<li><strong>分析中断原因</strong>：读取中断状态寄存器，确定中断来源和类型。</li>
-<li><strong>执行中断服务例程</strong>：根据中断类型调用相应的处理程序，如数据传输、错误处理等。</li>
-<li><strong>恢复现场</strong>：恢复被中断进程的CPU状态。</li>
-<li><strong>返回</strong>：返回到被中断的进程继续执行。</li>
-</ul>
-<p><strong>中断处理程序的类型：</strong></p>
-<ul>
-<li><strong>I/O中断处理</strong>：处理I/O设备完成操作后的中断请求。</li>
-<li><strong>时钟中断处理</strong>：处理定时器中断，用于进程调度和时间管理。</li>
-<li><strong>硬件故障中断处理</strong>：处理硬件故障，如内存校验错误、电源故障等。</li>
-<li><strong>程序性中断处理</strong>：处理程序执行中的异常，如除零、溢出、缺页等。</li>
-</ul>
-<p>中断处理程序是操作系统与硬件之间的最底层接口，要求执行速度快、可靠性高。</p>`
-},
-{
-id:"7.4.1",section:"7.4.1",title:"磁盘结构和管理",
-keywords:["磁盘结构","磁盘","disk structure","磁盘管理","磁道","扇区","柱面","盘片"],
-synonyms:["磁盘的结构","什么是磁盘","磁盘的组成","磁盘物理结构","磁盘的逻辑结构","磁盘访问时间"],
-content:`<p><strong>磁盘的物理结构：</strong></p>
-<ul>
-<li><strong>盘片 (Platters)</strong>：磁盘由多个盘片组成，每个盘片有两个记录面，是磁性存储介质。</li>
-<li><strong>磁头 (Head)</strong>：每个记录面对应一个磁头，用于读写数据。</li>
-<li><strong>磁道 (Track)</strong>：每个记录面上由多个同心圆组成磁道。</li>
-<li><strong>扇区 (Sector)</strong>：每个磁道被划分为多个扇区，是磁盘读写的基本单位，通常为512字节或4KB。</li>
-<li><strong>柱面 (Cylinder)</strong>：所有盘片上相同半径的磁道组成一个柱面。</li>
-</ul>
-<p><strong>磁盘的逻辑结构：</strong>磁盘地址由三个参数确定：柱面号、磁头号（盘面号）、扇区号。</p>
-<p><strong>磁盘访问时间 = 寻道时间 + 旋转延迟 + 传输时间</strong></p>
-<ul>
-<li><strong>寻道时间 (Seek Time)</strong>：磁头移动到目标磁道所需的时间，是磁盘访问时间的主要部分。</li>
-<li><strong>旋转延迟 (Rotational Latency)</strong>：目标扇区旋转到磁头下方所需的时间，平均为旋转周期的一半。对于7200RPM的磁盘，平均旋转延迟约为4.17ms。</li>
-<li><strong>传输时间 (Transfer Time)</strong>：数据读写所需的时间。</li>
-</ul>`
-},
-{
-id:"7.4.2",section:"7.4.2",title:"磁盘调度算法",
-keywords:["磁盘调度","磁盘调度算法","磁盘调度策略","FCFS","SSTF","SCAN","C-SCAN","LOOK","C-LOOK","电梯调度"],
-synonyms:["磁盘调度有哪些","磁盘调度算法有哪些","什么是磁盘调度","磁盘调度方式","常见的磁盘调度算法","磁盘调度计算"],
-content:`<p>磁盘调度的目标是减少多个I/O请求的平均寻道时间。</p>
-<p><strong>主要磁盘调度算法：</strong></p>
-<ul>
-<li><strong>先来先服务 (FCFS)</strong>：按请求到达的顺序依次服务。公平但效率低，平均寻道时间长。</li>
-<li><strong>最短寻道时间优先 (SSTF)</strong>：选择距离当前磁头位置最近的请求服务。性能较好但可能导致"饥饿"现象。</li>
-<li><strong>扫描算法 (SCAN，电梯算法)</strong>：磁头沿一个方向移动，服务沿途请求，到达一端后反向。避免了饥饿。</li>
-<li><strong>循环扫描 (C-SCAN)</strong>：磁头只沿一个方向移动，到达一端后立即返回起点，不服务返回途中的请求。提供更均匀的等待时间。</li>
-<li><strong>LOOK和C-LOOK</strong>：SCAN和C-SCAN的改进版，磁头不需要移动到磁盘端点，只需移动到最远的请求位置即可转向。</li>
-<li><strong>N-STEP-SCAN</strong>：将请求分为N个一组，每组处理完再处理下一组，完全消除饥饿。</li>
-<li><strong>F-SCAN</strong>：使用两个子队列，扫描期间新请求放入第二个队列，防止磁臂"粘滞"。</li>
-</ul>
-<p><strong>算法比较：</strong>FCFS最简单但性能最差；SSTF性能好但有饥饿风险；SCAN/C-SCAN兼顾性能和公平性，是实际应用中最常用的算法。</p>
-<p>切换到"磁盘调度计算"标签页可以进行交互式计算演示。</p>`
-},
-{
-id:"7.4.3",section:"7.4.3",title:"独立磁盘冗余阵列",
-keywords:["RAID","独立磁盘冗余阵列","磁盘阵列","RAID级别","RAID 0","RAID 1","RAID 5","RAID 6","RAID 10"],
-synonyms:["什么是raid","raid是什么","raid级别","raid 0 1 5","磁盘冗余","磁盘阵列是什么","raid技术"],
-content:`<p>RAID（Redundant Array of Independent Disks，独立磁盘冗余阵列）技术将多个磁盘组合成一个逻辑单元，提高性能和可靠性。</p>
-<p><strong>关键技术：</strong>条带化（Striping）提高性能，镜像（Mirroring）和奇偶校验（Parity）提供冗余。</p>
-<p><strong>主要RAID级别：</strong></p>
-<table>
-<tr><th>RAID级别</th><th>描述</th><th>优点</th><th>缺点</th><th>最少磁盘数</th></tr>
-<tr><td><strong>RAID 0</strong></td><td>条带化</td><td>最高性能</td><td>无冗余，单盘故障全丢</td><td>2</td></tr>
-<tr><td><strong>RAID 1</strong></td><td>镜像</td><td>完全冗余，读性能好</td><td>50%空间浪费</td><td>2</td></tr>
-<tr><td><strong>RAID 5</strong></td><td>条带化+分布式奇偶校验</td><td>良好性能和冗余</td><td>写操作有校验开销</td><td>3</td></tr>
-<tr><td><strong>RAID 6</strong></td><td>条带化+双重奇偶校验</td><td>可容忍两盘故障</td><td>校验开销更大</td><td>4</td></tr>
-<tr><td><strong>RAID 10</strong></td><td>RAID 1+RAID 0</td><td>高性能+高冗余</td><td>成本最高</td><td>4</td></tr>
-</table>
-<p><strong>RAID 0（条带化）</strong>：数据分散存储在多个磁盘上，无冗余。读写性能最高，但无容错能力。</p>
-<p><strong>RAID 1（镜像）</strong>：数据完全复制到另一块磁盘。可靠性高，但磁盘利用率仅50%。</p>
-<p><strong>RAID 5（分布式奇偶校验）</strong>：数据和奇偶校验信息分布在所有磁盘上。允许一块磁盘故障而不丢失数据。读性能好，写性能因校验计算而降低。</p>`
-},
-{
-id:"7.4.4",section:"7.4.4",title:"非易失性存储器",
-keywords:["非易失性存储器","NVM","SSD","闪存","Flash","NVMe","NAND","固态硬盘"],
-synonyms:["什么是非易失性存储器","ssd","固态硬盘","闪存存储器","nvm是什么","非易失性存储"],
-content:`<p>非易失性存储器（Non-Volatile Memory, NVM）在断电后仍能保持数据。</p>
-<p><strong>主要类型：</strong></p>
-<ul>
-<li><strong>闪存 (Flash Memory)</strong>：包括NAND Flash和NOR Flash。NAND Flash用于SSD、U盘等大容量存储；NOR Flash用于嵌入式系统的代码存储。</li>
-<li><strong>SSD（固态硬盘）</strong>：基于NAND Flash的存储设备，无机械部件，速度快、抗震性好。</li>
-<li><strong>3D XPoint (Intel Optane)</strong>：新型NVM，性能更接近DRAM，字节可寻址。</li>
-<li><strong>NVMe SSD</strong>：使用NVMe协议的SSD，通过PCIe总线直接连接CPU，延迟极低。</li>
-</ul>
-<p><strong>SSD与传统磁盘的比较：</strong></p>
-<table>
-<tr><th>特性</th><th>HDD（机械磁盘）</th><th>SSD（固态硬盘）</th></tr>
-<tr><td>访问方式</td><td>机械寻道+旋转</td><td>电子寻址</td></tr>
-<tr><td>寻道时间</td><td>几毫秒</td><td>几微秒</td></tr>
-<tr><td>抗震性</td><td>差</td><td>好</td></tr>
-<tr><td>功耗</td><td>较高</td><td>较低</td></tr>
-<tr><td>写入寿命</td><td>几乎无限</td><td>有限（擦写次数）</td></tr>
-<tr><td>单位容量成本</td><td>低</td><td>较高</td></tr>
-</table>
-<p><strong>SSD的特性对操作系统的影响：</strong>SSD不需要磁盘调度（无寻道时间）；需要考虑磨损均衡（Wear Leveling）；TRIM命令帮助SSD管理空闲块。</p>`
-},
-{
-id:"7.5.1",section:"7.5.1",title:"缓冲技术",
-keywords:["缓冲","缓冲区","Buffer","缓冲技术","缓冲的作用","单缓冲","双缓冲","循环缓冲"],
-synonyms:["什么是缓冲","缓冲的作用","缓冲区的作用","为什么需要缓冲","缓冲技术","单缓冲双缓冲"],
-content:`<p>缓冲（Buffering）是在内存中设置缓冲区，用于缓和CPU与I/O设备之间速度不匹配的技术。</p>
-<p><strong>引入缓冲的原因：</strong></p>
-<ul>
-<li>CPU速度快，I/O设备速度慢，缓冲可以缓和这一矛盾。</li>
-<li>减少CPU的中断频率和上下文切换开销。</li>
-<li>支持数据的批量传输，提高I/O效率。</li>
-<li>适配不同数据传输大小的设备。</li>
-<li>支持复制语义（copy semantics）。</li>
-</ul>
-<p><strong>缓冲的类型：</strong></p>
-<ul>
-<li><strong>单缓冲</strong>：系统只设置一个缓冲区。CPU和设备交替工作，不能完全并行。例如：10块数据，读10ms/块，处理8ms/块 → 总时间 ≈ 110ms。</li>
-<li><strong>双缓冲</strong>：设置两个缓冲区。当一个缓冲区被CPU使用时，另一个可以被设备使用，实现了一定程度的并行。同样条件下 → 总时间 ≈ 100ms。</li>
-<li><strong>循环缓冲</strong>：由多个缓冲区组成的循环队列，支持多个生产者和消费者。适合连续数据流（音频、视频、传感器、网络数据）。</li>
-<li><strong>缓冲池</strong>：由多个缓冲区组成的池，由操作系统统一管理，可以被多个进程共享使用。</li>
-</ul>
-<p><strong>缓冲的代价：</strong>增加了内存开销，数据需要在缓冲区之间复制。</p>`
-},
-{
-id:"7.5.2",section:"7.5.2",title:"磁盘高速缓存",
-keywords:["磁盘高速缓存","磁盘缓存","Disk Cache","Buffer Cache","页缓存","缓存替换"],
-synonyms:["什么是磁盘高速缓存","disk cache","buffer cache","磁盘缓存的作用","页缓存","缓存策略"],
-content:`<p>磁盘高速缓存（Disk Cache）是利用内存的一部分空间来缓存磁盘数据，以减少磁盘I/O操作的技术。</p>
-<p><strong>工作原理：</strong></p>
-<ul>
-<li>当进程请求读取磁盘数据时，系统首先检查数据是否在高速缓存中。</li>
-<li>如果命中（Cache Hit），直接从内存返回数据，速度远快于磁盘I/O。</li>
-<li>如果未命中（Cache Miss），从磁盘读取数据并存入缓存，再返回给进程。</li>
-<li>写操作可以采用写回（Write-Back）或直写（Write-Through）策略。</li>
-</ul>
-<p><strong>缓存替换算法：</strong></p>
-<ul>
-<li><strong>LRU（最近最少使用）</strong>：淘汰最长时间未被访问的数据块。利用局部性原理，效果好。</li>
-<li><strong>LFU（最不经常使用）</strong>：淘汰访问频率最低的数据块。</li>
-<li><strong>Clock算法</strong>：LRU的近似实现，效率更高，Linux的页缓存使用此算法的变种。</li>
-</ul>
-<p><strong>磁盘高速缓存与缓冲的区别：</strong>缓冲主要用于速度匹配，而磁盘高速缓存主要用于减少磁盘访问次数，提高数据访问速度。</p>`
-},
-{
-id:"7.5.3",section:"7.5.3",title:"提高磁盘I/O速度的其他方法",
-keywords:["提高磁盘I/O","提高I/O速度","I/O优化","磁盘优化","预读","延迟写","优化磁盘"],
-synonyms:["如何提高磁盘io速度","磁盘io优化","提高io速度的方法","磁盘性能优化","io优化方法"],
-content:`<p>除了缓冲和高速缓存外，还有多种方法可以提高磁盘I/O速度：</p>
-<ul>
-<li><strong>优化磁盘调度算法</strong>：使用SCAN、C-SCAN等高效的调度算法减少寻道时间。</li>
-<li><strong>预读 (Read-Ahead)</strong>：预测进程接下来可能访问的数据块，提前读入缓存。适用于顺序访问模式，利用了空间局部性原理。</li>
-<li><strong>延迟写 (Deferred Write / Write-Behind)</strong>：写操作先写入缓存，积累到一定量后再写回磁盘。减少写操作次数，但增加了数据丢失的风险。</li>
-<li><strong>虚拟磁盘</strong>：用一部分内存模拟磁盘，速度极快，但断电后数据丢失。</li>
-<li><strong>优化文件布局</strong>：将相关文件存储在相邻的磁盘块上，减少寻道时间。如Linux的ext文件系统采用块组策略。</li>
-<li><strong>使用SSD替代HDD</strong>：SSD无机械延迟，I/O速度远超传统磁盘。</li>
-<li><strong>使用RAID技术</strong>：通过数据条带化实现并行I/O，提高吞吐量。</li>
-<li><strong>内存映射文件</strong>：将文件直接映射到内存地址空间，避免显式的I/O系统调用。</li>
-</ul>`
-},
-// ==================== 第8章 文件管理 ====================
-{
-id:"8.1.1",section:"8.1.1",title:"文件类型",
-keywords:["文件类型","文件分类","文件种类","file type","普通文件","目录文件","特殊文件"],
-synonyms:["文件有哪些类型","什么是文件类型","文件的种类","文件类型有哪些","文件的分类"],
-content:`<p>文件是存储在辅助存储设备（磁盘、磁带、光盘）上的命名相关信息的集合。文件可以从多个角度进行分类：</p>
-<p><strong>按用途分类：</strong></p>
-<ul>
-<li><strong>系统文件</strong>：操作系统内核和系统程序，如内核文件、设备驱动程序等。</li>
-<li><strong>用户文件</strong>：用户自己的数据文件、程序文件等。</li>
-<li><strong>库文件</strong>：系统提供的标准库函数和子程序。</li>
-</ul>
-<p><strong>按文件性质分类：</strong></p>
-<ul>
-<li><strong>普通文件 (Regular File)</strong>：由用户创建的包含数据或程序的文件。包括文本文件、二进制文件、可执行文件等。</li>
-<li><strong>目录文件 (Directory File)</strong>：包含目录项，用于组织文件系统的层次结构。</li>
-<li><strong>特殊文件 (Special File)</strong>：用于表示I/O设备。
-<ul>
-<li>字符特殊文件：逐字符处理数据，如终端、打印机。</li>
-<li>块特殊文件：按块处理数据，如磁盘、磁带。</li>
-</ul>
-</li>
-</ul>
-<p><strong>按保护级别分类：</strong>只读文件、读写文件、可执行文件、系统保护文件等。</p>`
-},
-{
-id:"8.1.2",section:"8.1.2",title:"文件属性",
-keywords:["文件属性","文件信息","file attribute","文件元数据","metadata"],
-synonyms:["文件的属性","文件有哪些属性","什么是文件属性","文件的元数据","file metadata"],
-content:`<p>文件属性（也称文件元数据 Metadata）是描述文件特征的信息，通常包括：</p>
-<ul>
-<li><strong>文件名 (Name)</strong>：文件的标识符，用于用户访问文件。</li>
-<li><strong>文件类型 (Type)</strong>：标识文件的种类（普通文件、目录、特殊文件等）。</li>
-<li><strong>文件大小 (Size)</strong>：文件当前的字节数或块数。</li>
-<li><strong>文件位置/地址 (Location)</strong>：文件在存储设备上的物理地址。</li>
-<li><strong>创建时间</strong>：文件被创建的时间。</li>
-<li><strong>修改时间</strong>：文件内容最后一次被修改的时间。</li>
-<li><strong>访问时间</strong>：文件最后一次被访问的时间。</li>
-<li><strong>文件所有者 (Owner ID)</strong>：创建文件的用户ID。</li>
-<li><strong>文件权限 (Protection)</strong>：定义哪些用户可以以什么方式访问文件（读、写、执行）。</li>
-<li><strong>文件标志</strong>：如只读、隐藏、系统文件、归档等标志。</li>
-</ul>
-<p>文件属性通常存储在文件控制块（FCB）或索引节点（inode）中。</p>`
-},
-{
-id:"8.1.3",section:"8.1.3",title:"文件的操作",
-keywords:["文件操作","文件的基本操作","file operation","创建文件","删除文件","读写文件"],
-synonyms:["文件有哪些操作","可以对文件做什么操作","文件的基本操作有哪些","file operations"],
-content:`<p>操作系统提供以下基本文件操作：</p>
-<ul>
-<li><strong>创建文件 (Create)</strong>：在文件系统中分配空间，建立FCB，初始化文件属性。</li>
-<li><strong>删除文件 (Delete)</strong>：释放文件占用的存储空间，删除FCB。</li>
-<li><strong>打开文件 (Open)</strong>：将文件属性读入内存，建立用户进程与文件的关联，返回文件描述符。</li>
-<li><strong>关闭文件 (Close)</strong>：将修改后的文件属性写回磁盘，释放打开文件表中的表项。</li>
-<li><strong>读文件 (Read)</strong>：从文件中读取数据到内存缓冲区。</li>
-<li><strong>写文件 (Write)</strong>：将数据从内存写入文件。</li>
-<li><strong>定位文件 (Seek/Reposition)</strong>：移动文件读写指针到指定位置。</li>
-<li><strong>截断文件 (Truncate)</strong>：清空文件内容但保留文件属性。</li>
-<li><strong>重命名文件 (Rename)</strong>：修改文件名。</li>
-</ul>
-<p>文件操作的一般流程：打开文件 → 读/写文件 → 关闭文件。</p>`
-},
-{
-id:"8.1.4",section:"8.1.4",title:"文件访问方式",
-keywords:["文件访问方式","访问方式","顺序访问","随机访问","file access","直接访问","索引顺序访问"],
-synonyms:["文件怎么访问","文件的访问方式有哪些","什么是顺序访问","什么是随机访问","直接访问"],
-content:`<p>文件的访问方式主要有以下几种：</p>
-<table>
-<tr><th>方法</th><th>描述</th><th>优点</th><th>缺点</th><th>适用场景</th></tr>
-<tr><td><strong>顺序访问</strong></td><td>按记录顺序逐一访问</td><td>实现简单、不易数据损坏</td><td>搜索慢、中间插入/更新困难</td><td>磁带、编译器</td></tr>
-<tr><td><strong>直接/随机访问</strong></td><td>通过块号直接访问任意记录</td><td>即时访问、平均访问时间低</td><td>实现复杂、存储开销大</td><td>数据库、磁盘</td></tr>
-<tr><td><strong>索引顺序访问</strong></td><td>基于顺序访问构建索引</td><td>搜索快、支持顺序和随机访问</td><td>实现复杂、需要额外索引空间</td><td>大型文件</td></tr>
-</table>
-<p><strong>顺序访问 (Sequential Access)：</strong>按文件内容的先后顺序依次读写，不能跳过中间内容直接访问。类似于磁带的访问方式。</p>
-<p><strong>随机访问 (Random Access) / 直接访问 (Direct Access)：</strong>可以按照任意顺序访问文件中的任何部分。通过移动读写指针（Seek操作）定位到指定位置。</p>
-<p>现代操作系统通常同时支持两种访问方式，由应用程序根据需要选择。</p>`
-},
-{
-id:"8.2.1",section:"8.2.1",title:"文件结构",
-keywords:["文件结构","文件组织","file structure","无结构文件","有结构文件","流式文件","记录式文件"],
-synonyms:["什么是文件结构","文件的结构","文件的组织形式","文件逻辑结构"],
-content:`<p>文件结构指文件的逻辑组织形式。</p>
-<p><strong>无结构文件（流式文件）：</strong></p>
-<ul>
-<li>文件被视为一个字符流或字节序列，没有内部结构。</li>
-<li>操作系统不关心文件内容的含义，只负责存储和检索。</li>
-<li>Unix/Linux系统采用这种方式，所有文件都是字节流。</li>
-<li>灵活性高，由应用程序自己解释文件内容。</li>
-</ul>
-<p><strong>有结构文件（记录式文件）：</strong></p>
-<ul>
-<li>文件由若干个记录组成，每个记录有固定的或可变的结构。</li>
-<li>操作系统了解文件的内部结构，可以按记录进行存取。</li>
-<li>适用于数据库等需要按记录处理的场景。</li>
-<li>分为定长记录和变长记录两种。</li>
-</ul>
-<p><strong>有结构文件的组织方式：</strong></p>
-<ul>
-<li><strong>顺序文件</strong>：记录按关键字或时间顺序排列，适合批量处理。</li>
-<li><strong>索引文件</strong>：建立索引表，支持快速随机访问。</li>
-<li><strong>索引顺序文件</strong>：结合顺序和索引的优点。</li>
-<li><strong>直接文件（散列文件）</strong>：通过散列函数映射到存储位置，访问时间接近O(1)。</li>
-</ul>
-<p>现代操作系统多采用无结构文件（字节流）方式，将文件结构的解释权交给应用程序。</p>`
-},
-{
-id:"8.2.2",section:"8.2.2",title:"有结构文件的组织",
-keywords:["有结构文件","记录式文件","顺序文件","索引文件","索引顺序文件","直接文件","散列文件"],
-synonyms:["有结构文件怎么组织","记录文件的组织方式","索引文件是什么","顺序文件和索引文件"],
-content:`<p>有结构文件（记录式文件）的组织方式主要有：</p>
-<p><strong>顺序文件：</strong></p>
-<ul>
-<li>记录按某种顺序（如关键字顺序或时间顺序）排列。</li>
-<li>适合顺序访问，批量处理效率高。</li>
-<li>插入和删除记录效率低，需要移动大量记录。</li>
-</ul>
-<p><strong>索引文件：</strong></p>
-<ul>
-<li>为文件建立索引表，索引表包含关键字和记录位置的映射。</li>
-<li>支持快速随机访问，通过索引直接定位记录。</li>
-<li>需要额外的存储空间存放索引表。</li>
-</ul>
-<p><strong>索引顺序文件：</strong></p>
-<ul>
-<li>结合了顺序文件和索引文件的优点。</li>
-<li>记录按关键字顺序存储，同时建立稀疏索引。</li>
-<li>既支持高效的顺序访问，也支持较快的随机访问。</li>
-</ul>
-<p><strong>直接文件（散列文件）：</strong></p>
-<ul>
-<li>通过散列函数将关键字映射到存储位置。</li>
-<li>访问时间接近O(1)，是最快的随机访问方式。</li>
-<li>可能出现散列冲突，需要处理冲突的策略。</li>
-</ul>`
-},
-{
-id:"8.2.3",section:"8.2.3",title:"文件系统",
-keywords:["文件系统","file system","文件系统的作用","文件系统的功能","文件系统类型"],
-synonyms:["什么是文件系统","文件系统是什么","文件系统的功能","文件系统的作用","常见文件系统"],
-content:`<p>文件系统是操作系统中负责管理和组织文件的部分。</p>
-<p><strong>文件系统的主要功能：</strong></p>
-<ul>
-<li><strong>文件存储空间管理</strong>：分配和回收磁盘空间，管理空闲块。</li>
-<li><strong>文件目录管理</strong>：维护文件的目录结构，实现按名存取。</li>
-<li><strong>文件的读写管理</strong>：控制文件的读写操作，管理文件缓冲区。</li>
-<li><strong>文件共享与保护</strong>：支持多用户共享文件，提供访问控制机制。</li>
-<li><strong>可靠性管理</strong>：提供备份和恢复机制，保证数据安全。</li>
-</ul>
-<p><strong>文件系统的层次结构：</strong></p>
-<ul>
-<li><strong>逻辑文件系统</strong>：处理文件的逻辑结构和用户接口。</li>
-<li><strong>文件组织模块</strong>：管理文件的逻辑块到物理块的映射。</li>
-<li><strong>基本文件系统</strong>：处理物理块的读写。</li>
-<li><strong>I/O控制层</strong>：设备驱动程序和中断处理程序。</li>
-</ul>
-<p><strong>常见的文件系统：</strong></p>
-<table>
-<tr><th>文件系统</th><th>特点</th><th>最大文件</th><th>最大分区</th></tr>
-<tr><td>FAT32</td><td>最古老简单，无权限和日志</td><td>4GB</td><td>2TB</td></tr>
-<tr><td>NTFS</td><td>Windows默认，支持权限、加密、压缩、日志</td><td>16TB</td><td>256TB</td></tr>
-<tr><td>exFAT</td><td>为闪存设计，跨平台兼容</td><td>16EB</td><td>128PB</td></tr>
-<tr><td>ext2/3/4</td><td>Linux主流，ext3/4有日志功能</td><td>-</td><td>-</td></tr>
-<tr><td>APFS</td><td>现代Apple设备，针对SSD优化</td><td>-</td><td>-</td></tr>
-</table>`
-},
-{
-id:"8.3.1",section:"8.3.1",title:"文件控制块和索引节点",
-keywords:["FCB","文件控制块","索引节点","inode","File Control Block","索引节点结构"],
-synonyms:["什么是fcb","fcb是什么","什么是inode","inode是什么","文件控制块的作用","索引节点的作用"],
-content:`<p><strong>文件控制块（FCB，File Control Block）：</strong></p>
-<ul>
-<li>FCB是操作系统为每个文件维护的一个数据结构，用于存放文件的所有属性信息。</li>
-<li>包含：文件名、文件大小、物理地址、创建时间、权限等。</li>
-<li>FCB是文件存在的唯一标志，文件被创建时建立FCB，文件被删除时撤销FCB。</li>
-</ul>
-<p><strong>索引节点（inode）：</strong></p>
-<ul>
-<li>Unix/Linux系统将FCB拆分为两部分：文件名和索引节点号放在目录项中，其余信息放在索引节点中。</li>
-<li>inode包含：文件大小、所有者、权限、时间戳、数据块指针等，但不包含文件名。</li>
-<li><strong>inode的数据块指针结构：</strong>
-<ul>
-<li>直接指针（通常10个）：直接指向数据块，小文件快速访问。</li>
-<li>单级间接指针：指向一个包含块地址的块，用于中等大小文件。</li>
-<li>二级间接指针：指向包含间接指针的块，用于大文件。</li>
-<li>三级间接指针：用于极大文件。</li>
-</ul>
-</li>
-<li><strong>优点：</strong>减少访问目录时的磁盘I/O；支持文件共享（多个目录项指向同一个inode）。</li>
-</ul>
-<p><strong>FCB与inode的比较：</strong>传统FCB将文件名和属性放在一起；inode将文件名分离出去，提高了目录检索效率。</p>`
-},
-{
-id:"8.3.2",section:"8.3.2",title:"单级目录",
-keywords:["单级目录","flat directory","单级目录结构"],
-synonyms:["什么是单级目录","单级目录是什么","平面目录"],
-content:`<p>单级目录结构是最简单的目录组织方式。</p>
-<p><strong>特点：</strong></p>
-<ul>
-<li>整个系统只有一个目录，所有文件都放在这个目录中。</li>
-<li>每个文件对应一个目录项，包含文件名和文件属性（或FCB）。</li>
-</ul>
-<p><strong>优点：</strong>实现简单，查找文件只需检索一个目录。</p>
-<p><strong>缺点：</strong></p>
-<ul>
-<li>不允许文件重名，所有用户共享一个命名空间。</li>
-<li>文件数量多时，目录表很长，检索效率低。</li>
-<li>不支持文件的分类组织。</li>
-<li>不同用户的文件无法区分归属。</li>
-</ul>
-<p>单级目录结构仅适用于非常简单的单用户系统，现代操作系统不再使用。</p>`
-},
-{
-id:"8.3.3",section:"8.3.3",title:"两级目录",
-keywords:["两级目录","two-level directory","主文件目录","用户文件目录","MFD","UFD"],
-synonyms:["什么是两级目录","两级目录结构","mfd和ufd","主文件目录和用户文件目录"],
-content:`<p>两级目录结构在单级目录的基础上增加了一层用户目录。</p>
-<p><strong>结构：</strong></p>
-<ul>
-<li><strong>主文件目录（MFD，Master File Directory）</strong>：按用户名索引，每个用户对应一个表项。</li>
-<li><strong>用户文件目录（UFD，User File Directory）</strong>：每个用户有自己的UFD，存放该用户所有文件的目录项。</li>
-</ul>
-<p><strong>优点：</strong></p>
-<ul>
-<li>不同用户可以使用相同的文件名，解决了命名冲突问题。</li>
-<li>实现了用户之间的隔离。</li>
-<li>检索效率比单级目录高（先查MFD定位用户，再查UFD定位文件）。</li>
-</ul>
-<p><strong>缺点：</strong></p>
-<ul>
-<li>用户不能创建子目录，无法对文件进行分类管理。</li>
-<li>不支持文件共享。</li>
-</ul>
-<p>两级目录结构比单级目录有所改进，但仍不能满足复杂文件组织的需求。</p>`
-},
-{
-id:"8.3.4",section:"8.3.4",title:"树形目录",
-keywords:["树形目录","tree directory","多级目录","目录树","路径","绝对路径","相对路径"],
-synonyms:["什么是树形目录","树形目录结构","多级目录结构","目录树是什么"],
-content:`<p>树形目录结构是现代操作系统最常用的目录组织方式。</p>
-<p><strong>特点：</strong></p>
-<ul>
-<li>目录呈树形结构，有一个根目录（如Unix的"/"或Windows的"C:\"）。</li>
-<li>每个目录可以包含文件和子目录，子目录又可以包含更多的文件和子目录。</li>
-<li>文件通过路径名来定位，路径名由从根目录到该文件所经过的所有目录名组成。</li>
-</ul>
-<p><strong>路径类型：</strong></p>
-<ul>
-<li><strong>绝对路径</strong>：从根目录开始的完整路径，如"/home/user/file.txt"。</li>
-<li><strong>相对路径</strong>：从当前工作目录开始的路径，如"../docs/file.txt"。</li>
-</ul>
-<p><strong>其他目录结构：</strong></p>
-<ul>
-<li><strong>无环图目录</strong>：允许文件/目录有多个父目录（通过链接），支持共享，删除时需小心（引用计数）。</li>
-<li><strong>通用图目录</strong>：允许循环引用，最灵活但遍历复杂。</li>
-</ul>
-<p><strong>树形目录的优点：</strong>支持文件的分类组织，层次清晰；不同目录下文件可以重名；检索效率高；支持文件共享和访问控制。</p>`
-},
-{
-id:"8.3.5",section:"8.3.5",title:"目录的查询",
-keywords:["目录查询","目录检索","查找文件","按名存取","目录搜索","目录优化"],
-synonyms:["如何查找文件","目录怎么查询","文件查找","按名存取是什么","目录检索过程"],
-content:`<p>目录查询（目录检索）是根据文件名查找文件的过程。</p>
-<p><strong>查询过程：</strong></p>
-<ul>
-<li>用户给出文件的路径名（绝对路径或相对路径）。</li>
-<li>系统从根目录或当前目录开始，逐级检索目录项。</li>
-<li>每级目录中通过文件名匹配找到对应的目录项，获取下一级目录或文件的inode/FCB。</li>
-<li>最终找到目标文件，获取其属性和物理地址。</li>
-</ul>
-<p><strong>优化目录查询的方法：</strong></p>
-<ul>
-<li><strong>分解法</strong>：将路径名分解为多个分量，逐级查找。</li>
-<li><strong>缓存目录项</strong>：将最近访问过的目录项缓存在内存中（如Linux的dentry cache）。</li>
-<li><strong>哈希目录</strong>：对目录项建立哈希表，加速文件名匹配。</li>
-<li><strong>B树/B+树索引</strong>：平衡树结构，O(log n)查找。</li>
-<li><strong>线性搜索</strong>：简单但慢（O(n)），适用于小型目录。</li>
-</ul>
-<p>目录查询是文件系统中最频繁的操作之一，其性能直接影响用户体验。</p>`
-},
-{
-id:"8.3.6",section:"8.3.6",title:"文件的共享",
-keywords:["文件共享","共享文件","file sharing","硬链接","软链接","符号链接"],
-synonyms:["什么是文件共享","文件怎么共享","硬链接和软链接","link和symlink","文件共享的方式"],
-content:`<p>文件共享允许多个用户或进程访问同一个文件。</p>
-<p><strong>共享的实现方式：</strong></p>
-<ul>
-<li><strong>硬链接 (Hard Link)</strong>：多个目录项指向同一个inode。删除一个链接不影响其他链接，只有当所有链接都被删除时文件才被真正删除。不能跨文件系统，不能链接目录。使用引用计数管理。</li>
-<li><strong>软链接/符号链接 (Symbolic Link)</strong>：创建一个特殊的文件，其中包含目标文件的路径。可以跨文件系统，可以链接目录。目标文件被删除后，符号链接变成"悬空链接"。</li>
-</ul>
-<p><strong>共享带来的问题：</strong></p>
-<ul>
-<li><strong>一致性</strong>：多个用户同时修改文件时，需要保证数据的一致性。</li>
-<li><strong>保护</strong>：需要控制哪些用户可以共享访问文件，以及访问权限。</li>
-</ul>
-<p><strong>共享的层次：</strong>用户级共享（通过链接）、进程级共享（通过打开文件表）、网络级共享（如NFS、SMB/CIFS）。</p>`
-},
-{
-id:"8.4.1",section:"8.4.1",title:"文件系统的格式",
-keywords:["文件系统格式","磁盘格式化","文件系统类型","格式化","超级块"],
-synonyms:["什么是文件系统格式","磁盘格式化是什么","常见的文件系统","文件系统有哪些类型","文件系统布局"],
-content:`<p>文件系统格式指磁盘被格式化后的数据组织方式。</p>
-<p><strong>磁盘格式化的内容：</strong></p>
-<ul>
-<li><strong>物理格式化（低级格式化）</strong>：将磁盘划分为扇区。</li>
-<li><strong>逻辑格式化</strong>：创建文件系统结构（超级块、inode表、数据区等）。</li>
-<li><strong>分区</strong>：将磁盘划分为多个逻辑单元。</li>
-</ul>
-<p><strong>文件系统的典型布局：</strong></p>
-<pre>[引导块 Boot Block] [超级块 Super Block] [Inode位图] [块位图] [Inode表] [数据区]</pre>
-<ul>
-<li><strong>引导块</strong>：包含启动代码。</li>
-<li><strong>超级块</strong>：包含文件系统元数据（大小、块数、空闲块数等）。</li>
-<li><strong>Inode位图/块位图</strong>：管理空闲inode和数据块。</li>
-<li><strong>Inode表</strong>：所有文件的inode。</li>
-<li><strong>数据区</strong>：实际文件数据。</li>
-</ul>`
-},
-{
-id:"8.4.2",section:"8.4.2",title:"文件的存储结构",
-keywords:["文件存储结构","文件物理结构","连续分配","链接分配","索引分配","文件的存储方式","文件分配方法"],
-synonyms:["文件在磁盘上怎么存储","文件的物理存储","连续分配和链接分配","索引分配是什么","文件存储方式"],
-content:`<p>文件的存储结构指文件的逻辑块如何映射到磁盘的物理块。</p>
-<table>
-<tr><th>方法</th><th>描述</th><th>优点</th><th>缺点</th></tr>
-<tr><td><strong>连续分配</strong></td><td>文件占用连续的磁盘块</td><td>顺序和直接访问都快、寻道最少</td><td>内外碎片、扩展困难</td></tr>
-<tr><td><strong>链接分配</strong></td><td>文件是磁盘块的链表</td><td>无外碎片、灵活扩展</td><td>不支持直接访问、指针开销</td></tr>
-<tr><td><strong>索引分配</strong></td><td>每个文件有独立的索引块</td><td>支持直接访问、无外碎片</td><td>小文件索引块浪费空间</td></tr>
-</table>
-<p><strong>连续分配：</strong>文件占用一组连续的磁盘块。顺序访问性能最好，但产生外部碎片，文件扩展困难。</p>
-<p><strong>链接分配：</strong></p>
-<ul>
-<li>隐式链接：指针存放在数据块中。不支持高效的随机访问，可靠性差。</li>
-<li>FAT（文件分配表）：将链接指针集中存放在一张表中，提高了随机访问效率。</li>
-</ul>
-<p><strong>索引分配：</strong>为每个文件建立一个索引块。大文件需要多级索引（如Unix inode的直接块、一级间接块、二级间接块、三级间接块）。</p>`
-},
-{
-id:"8.4.3",section:"8.4.3",title:"空闲存储空间的管理",
-keywords:["空闲空间管理","空闲块管理","空闲盘块","位图法","空闲链表","成组链接","计数法"],
-synonyms:["如何管理空闲空间","空闲空间怎么管理","位图法是什么","空闲链表法","磁盘空闲空间管理"],
-content:`<p>空闲存储空间管理记录磁盘中哪些块是空闲的，以便分配给新文件使用。</p>
-<table>
-<tr><th>方法</th><th>描述</th><th>优点</th><th>缺点</th></tr>
-<tr><td><strong>位图/位向量</strong></td><td>每位代表一个磁盘块（1=空闲，0=占用）</td><td>简单、查找高效、易于找连续块</td><td>大磁盘时位图大</td></tr>
-<tr><td><strong>链表</strong></td><td>所有空闲块用指针链接</td><td>无大小限制、易于添加</td><td>遍历需逐块读取、指针开销</td></tr>
-<tr><td><strong>分组（成组链接）</strong></td><td>第一个空闲块存储n个空闲块地址</td><td>快速找到大量空闲块</td><td>块被占用时需更新整个组</td></tr>
-<tr><td><strong>计数</strong></td><td>记录连续空闲块的起始地址和数量</td><td>连续块分配快、列表更小</td><td>需要B树等结构高效操作</td></tr>
-</table>
-<p><strong>位图法的优势：</strong>查找连续空闲块效率高；易于实现；空间开销小（一个磁盘块的位图可以管理数千个磁盘块）。广泛用于现代文件系统。</p>
-<p><strong>成组链接法：</strong>Unix系统采用此方法，结合了链表和位图的优点。</p>`
-},
-{
-id:"8.5.1",section:"8.5.1",title:"坏块管理",
-keywords:["坏块管理","坏块","bad block","磁盘坏道","坏扇区","坏块替换"],
-synonyms:["什么是坏块","坏块怎么处理","磁盘坏道怎么办","坏扇区管理","如何处理坏块"],
-content:`<p>坏块（Bad Block）是磁盘上无法正常读写数据的物理块。</p>
-<p><strong>坏块的产生原因：</strong>磁盘表面物理损伤、磁头划伤盘片、制造缺陷等。</p>
-<p><strong>坏块管理策略：</strong></p>
-<ul>
-<li><strong>检测坏块</strong>：格式化时扫描磁盘，或使用专门的检测工具定期检查。</li>
-<li><strong>标记坏块</strong>：将坏块加入坏块列表，不再分配使用。</li>
-<li><strong>替换坏块</strong>：
-<ul>
-<li><strong>扇区备用</strong>：磁盘出厂时预留备用扇区，发现坏扇区时用备用扇区替换。</li>
-<li><strong>块备用</strong>：用空闲块替换坏块。</li>
-<li><strong>移位替换</strong>：将坏块之后的所有数据向前移动一位，用备用块补到最后。</li>
-</ul>
-</li>
-</ul>
-<p>现代磁盘控制器通常自动处理坏块重映射，对操作系统透明。</p>`
-},
-{
-id:"8.5.2",section:"8.5.2",title:"备份",
-keywords:["备份","backup","完全备份","增量备份","差异备份","数据备份","备份策略"],
-synonyms:["什么是备份","备份的方式","完全备份和增量备份","数据备份策略","如何做备份"],
-content:`<p>备份是将文件系统的数据复制到另一个存储介质上，以防止数据丢失。</p>
-<p><strong>备份类型：</strong></p>
-<ul>
-<li><strong>完全备份（Full Backup）</strong>：备份所有数据。恢复最简单，但备份时间长、占用空间大。</li>
-<li><strong>增量备份（Incremental Backup）</strong>：只备份自上次备份以来发生变化的数据。备份快、占用空间小，但恢复时需要依次恢复完全备份和所有增量备份。</li>
-<li><strong>差异备份（Differential Backup）</strong>：备份自上次完全备份以来发生变化的数据。恢复时只需完全备份和最后一次差异备份。</li>
-</ul>
-<p><strong>备份策略：</strong>通常采用"完全备份 + 增量/差异备份"的组合策略，如每周一次完全备份，每天一次增量备份。</p>
-<p><strong>备份介质：</strong>磁带、外部硬盘、网络存储、云存储等。</p>`
-},
-{
-id:"8.5.3",section:"8.5.3",title:"文件系统一致性问题",
-keywords:["文件系统一致性","一致性","consistency","文件系统检查","fsck","崩溃恢复","日志文件系统"],
-synonyms:["什么是一致性","文件系统一致性问题","fsck是什么","系统崩溃后文件系统","文件系统检查"],
-content:`<p>文件系统一致性问题指系统崩溃后，文件系统可能处于不一致的状态。</p>
-<p><strong>不一致的原因：</strong></p>
-<ul>
-<li>文件系统操作（如创建、删除、写入文件）通常需要多次磁盘访问。</li>
-<li>如果在操作过程中系统崩溃，部分操作已完成而部分未完成，导致数据不一致。</li>
-<li>例如：分配了磁盘块但FCB未更新；更新了FCB但数据未写入磁盘等。</li>
-</ul>
-<p><strong>常见的不一致情况：</strong></p>
-<ul>
-<li>空闲块位图与实际使用情况不符。</li>
-<li>链接计数与实际链接数不符。</li>
-<li>数据块被多个文件同时引用但未被标记为共享。</li>
-<li>数据块未被任何文件引用但未被标记为空闲。</li>
-</ul>
-<p><strong>解决方法：</strong></p>
-<ul>
-<li><strong>文件系统检查（fsck）</strong>：系统重启时扫描文件系统，检测并修复不一致。检查内容：块一致性、计数一致性、目录一致性。</li>
-<li><strong>日志文件系统（Journaling）</strong>：在修改数据之前先将操作记录到日志中，崩溃后通过日志恢复。如ext3/ext4、NTFS、XFS。
-<ul>
-<li>日志元数据：仅记录元数据更改（ext3默认）。</li>
-<li>日志数据：记录数据和元数据（最安全但最慢）。</li>
-<li>有序日志：仅记录元数据，但确保数据先写入。</li>
-</ul>
-</li>
-<li><strong>写时复制（Copy-on-Write）</strong>：修改数据时先写入新位置，成功后再更新指针。如ZFS、Btrfs。</li>
-</ul>`
-},
-{
-id:"8.5.4",section:"8.5.4",title:"数据一致性控制",
-keywords:["数据一致性控制","并发一致性","数据一致性","cache一致性","文件一致性","原子操作"],
-synonyms:["如何保证数据一致性","数据一致性是什么","并发访问的一致性","多进程文件访问一致性"],
-content:`<p>数据一致性控制确保在多用户、多进程环境下，文件数据的正确性和一致性。</p>
-<p><strong>一致性问题场景：</strong></p>
-<ul>
-<li>多个进程同时写入同一个文件，可能导致数据交错或覆盖。</li>
-<li>一个进程读取另一个进程正在修改的文件，可能读到不一致的数据。</li>
-<li>使用缓存时，内存中的数据与磁盘上的数据可能不一致。</li>
-</ul>
-<p><strong>一致性控制方法：</strong></p>
-<ul>
-<li><strong>文件锁</strong>：通过加锁机制控制对文件的并发访问。分为共享锁（读锁）和排他锁（写锁）。</li>
-<li><strong>原子操作</strong>：操作要么完全完成，要么完全不执行。</li>
-<li><strong>事务机制</strong>：将文件操作作为原子事务执行，要么全部完成，要么全部回滚。</li>
-<li><strong>写时复制 (Copy-on-Write)</strong>：Btrfs、ZFS使用，修改时先复制再修改。</li>
-<li><strong>快照 (Snapshot)</strong>：文件系统在某一时点的只读副本。</li>
-<li><strong>缓存一致性协议</strong>：在分布式文件系统中，确保各节点的缓存数据一致。</li>
-</ul>
-<p><strong>Unix的一致性模型：</strong>Unix对打开的文件提供"最终一致性"保证——对文件的修改对所有打开该文件的进程立即可见。</p>`
-},
-{
-id:"8.6.1",section:"8.6.1",title:"保护域",
-keywords:["保护域","protection domain","访问控制","访问权限","访问控制列表"],
-synonyms:["什么是保护域","保护域是什么","访问控制是什么","如何控制文件访问"],
-content:`<p>保护域定义了进程可以访问的资源和访问方式。</p>
-<p><strong>保护域的概念：</strong></p>
-<ul>
-<li>每个进程在一个保护域中运行，保护域是一组<对象, 权限>对的集合。</li>
-<li>对象可以是文件、设备、内存区域等系统资源。</li>
-<li>权限包括读、写、执行、删除等操作权限。</li>
-</ul>
-<p><strong>保护域的实现方式：</strong></p>
-<ul>
-<li><strong>基于用户</strong>：每个用户有一个保护域，进程继承用户的权限。如Unix的UID/GID机制。</li>
-<li><strong>基于进程</strong>：每个进程有独立的保护域，进程可以在运行时切换保护域。</li>
-<li><strong>基于角色</strong>：用户通过角色获得权限，如RBAC（基于角色的访问控制）。</li>
-</ul>
-<p><strong>Unix的权限模型：</strong>文件权限分为三组——所有者（owner）、组（group）、其他（others），每组有读（r）、写（w）、执行（x）三种权限。</p>
-<pre>-rwxr-xr--  1  user  group  1024  Jan 1 12:00  file.txt
-^^^^^^^^^^     ^     ^
-权限位(9位)   所有者  所属组
-
-r=读(4), w=写(2), x=执行(1)
-chmod 755 file → rwxr-xr-x</pre>`
-},
-{
-id:"8.6.2",section:"8.6.2",title:"保护矩阵的实现",
-keywords:["保护矩阵","protection matrix","访问矩阵","ACL","能力表","capability","访问控制列表"],
-synonyms:["什么是保护矩阵","保护矩阵是什么","访问控制列表","能力表","ACL和capability"],
-content:`<p>保护矩阵（访问矩阵）是描述系统中主体（进程/用户）对客体（文件/资源）访问权限的抽象模型。</p>
-<p><strong>保护矩阵的结构：</strong></p>
-<ul>
-<li>矩阵的行代表主体（进程、用户），列代表客体（文件、设备）。</li>
-<li>矩阵元素Access[i,j]表示主体i对客体j的访问权限集合。</li>
-</ul>
-<p><strong>保护矩阵的实现方式：</strong></p>
-<ul>
-<li><strong>访问控制列表（ACL，Access Control List）</strong>：按列存储，每个客体关联一个列表，列出哪些主体可以访问以及权限是什么。便于查询"谁能访问这个文件"。Unix的权限位是简化的ACL。</li>
-<li><strong>能力表（Capability List）</strong>：按行存储，每个主体关联一个列表，列出它可以访问哪些客体及权限。便于查询"这个进程能访问什么"。</li>
-</ul>
-<p><strong>ACL vs 能力表：</strong>ACL更适合文件系统的权限管理（如Unix的权限位、Windows的ACL）；能力表更适合分布式系统的权限管理。实际系统中常结合使用。</p>`
-},
-{
-id:"8.6.3",section:"8.6.3",title:"分级安全管理",
-keywords:["分级安全管理","安全级别","security level","多级安全","访问级别","Bell-LaPadula","Biba"],
-synonyms:["什么是分级安全管理","安全级别有哪些","多级安全","文件保护级别"],
-content:`<p>分级安全管理将系统资源划分为不同的安全级别，用户也被授予不同的安全级别。</p>
-<p><strong>分级原则：</strong></p>
-<ul>
-<li>高级别用户可以访问低级别的资源，低级别用户不能访问高级别的资源。</li>
-<li>同级用户之间默认不能互相访问对方的资源，除非显式授权。</li>
-</ul>
-<p><strong>常见的安全级别：</strong></p>
-<ul>
-<li><strong>系统级</strong>：操作系统内核和关键系统文件，仅系统管理员可访问。</li>
-<li><strong>用户级</strong>：用户自己的文件和目录，用户有完全控制权。</li>
-<li><strong>组级</strong>：组内共享的文件，组成员按组权限访问。</li>
-<li><strong>公共级</strong>：所有用户都可以访问的公共资源。</li>
-</ul>
-<p><strong>多级安全模型：</strong></p>
-<ul>
-<li><strong>Bell-LaPadula模型</strong>：保护机密性。简单安全属性：不能上读（No Read Up）；*-属性：不能下写（No Write Down）。</li>
-<li><strong>Biba模型</strong>：保护完整性。简单完整性属性：不能下读；*-属性：不能上写。</li>
-</ul>
-<p><strong>其他保护机制：</strong>加密、审计、认证（密码、生物识别、多因素认证）、沙箱。</p>`
-}
+{id:"7.1.1",section:"7.1.1",title:"I/O管理的功能",keywords:["I/O管理","I/O管理功能","IO管理","输入输出管理","管理功能"],content:"I/O管理的主要功能包括：设备分配与回收、缓冲区管理、设备驱动、错误处理、提供用户接口。目标是提高I/O速度、方便用户使用、实现设备无关性。"},
+{id:"7.1.2",section:"7.1.2",title:"I/O硬件组成",keywords:["I/O硬件","I/O硬件组成","IO硬件","输入输出硬件","硬件组成"],content:"I/O系统由I/O设备、设备控制器、I/O通道、总线、I/O端口组成。I/O通信方式有专用指令I/O和内存映射I/O。"},
+{id:"7.1.3",section:"7.1.3",title:"I/O设备",keywords:["I/O设备","IO设备","输入输出设备","设备分类","块设备","字符设备"],content:"I/O设备按使用特性分为存储型、输入/输出型、交互型；按传输速率分为低速、中速、高速；按信息交换单位分为块设备和字符设备；按资源分配分为独占设备、共享设备、虚拟设备。"},
+{id:"7.1.4",section:"7.1.4",title:"设备控制器",keywords:["设备控制器","控制器","Device Controller","设备控制"],content:"设备控制器是CPU与I/O设备之间的接口，功能包括：接收和识别命令、数据交换、设备状态报告、地址识别、数据缓冲、差错控制。由命令寄存器、状态寄存器、数据寄存器、控制逻辑组成。"},
+{id:"7.1.5",section:"7.1.5",title:"设备通道",keywords:["设备通道","通道","I/O通道","IO通道","通道处理器","channel"],content:"设备通道是专门用于控制I/O操作的处理器。三种类型：字节多路通道（低速设备）、数组选择通道（高速设备）、数组多路通道（多台高速设备）。"},
+{id:"7.2.1",section:"7.2.1",title:"程序直接控制方式",keywords:["程序直接控制","程序查询","轮询","忙等待","programmed io","polling"],content:"CPU启动I/O设备后不断循环查询设备状态，等待期间处于忙等待状态。优点：实现简单。缺点：CPU利用率极低，CPU和外设只能串行工作。"},
+{id:"7.2.2",section:"7.2.2",title:"中断控制方式",keywords:["中断控制","中断","interrupt","中断驱动"],content:"CPU启动I/O设备后继续执行其他进程，设备完成后发出中断请求。优点：CPU与I/O可并行工作。缺点：每传输一个数据单元就要中断一次CPU，高速设备中断开销大。"},
+{id:"7.2.3",section:"7.2.3",title:"DMA控制方式",keywords:["DMA","DMA控制","直接存储器访问","Direct Memory Access"],content:"DMA允许I/O设备与内存之间直接进行数据传输，无需CPU干预。DMA控制器由地址寄存器、数据寄存器、控制逻辑、计数寄存器、控制寄存器组成。传输模式：突发模式、周期窃取模式、透明模式。"},
+{id:"7.2.4",section:"7.2.4",title:"通道控制方式",keywords:["通道控制","通道控制方式","channel"],content:"通道控制方式是I/O控制的最高级形式。CPU执行一条I/O指令启动通道，通道独立执行通道程序控制I/O设备。与DMA相比，通道可执行更复杂的操作，有自己的指令系统。"},
+{id:"7.2.5",section:"7.2.5",title:"四种I/O控制方式比较",keywords:["四种I/O控制方式比较","I/O控制方式比较","io控制方式对比","io控制方式","控制方式比较"],content:"四种I/O控制方式：程序直接控制（CPU全程参与，效率最低）、中断控制（每字节/字参与，中等效率）、DMA（开始和结束参与，高效率）、通道（仅初始配置，最高效率）。CPU干预程度逐渐降低，系统并行性逐渐提高。"},
+{id:"7.3.1",section:"7.3.1",title:"I/O软件层次结构",keywords:["I/O软件层次","I/O软件","io软件层次","设备无关层"],content:"I/O软件分为四层：用户层I/O软件（如stdio库）、设备无关的操作系统软件（设备命名、保护、缓冲）、设备驱动程序（与设备相关）、中断处理程序（最底层接口）。"},
+{id:"7.3.2",section:"7.3.2",title:"设备分配",keywords:["设备分配","设备分配策略","独占设备","共享设备","虚拟设备"],content:"独占设备一次只分配给一个进程（如打印机）；共享设备可同时分配给多个进程（如磁盘）；虚拟设备通过SPOOLing技术将独占设备模拟为共享设备。分配步骤：分配设备→分配控制器→分配通道→启动设备。"},
+{id:"7.3.3",section:"7.3.3",title:"SPOOLing技术",keywords:["SPOOLing","假脱机","虚拟设备","Simultaneous Peripheral Operations On-Line"],content:"SPOOLing利用磁盘作为缓冲，将独占设备改造为共享设备。组成：输入井和输出井（磁盘）、输入缓冲区和输出缓冲区（内存）、输入进程和输出进程、井管理程序。与Buffering的区别：SPOOLing使用磁盘存储，支持多作业I/O与执行重叠。"},
+{id:"7.3.4",section:"7.3.4",title:"设备驱动程序",keywords:["设备驱动程序","驱动程序","Device Driver","driver"],content:"设备驱动程序是内核中直接与硬件交互的模块。功能：接收抽象命令、转换为设备命令、检查设备状态、控制I/O操作。每个设备有对应的驱动程序，向上提供统一接口实现设备无关性。"},
+{id:"7.3.5",section:"7.3.5",title:"中断处理程序",keywords:["中断处理程序","中断处理","Interrupt Handler","中断服务程序","ISR"],content:"中断处理过程：保存现场→分析中断原因→执行中断服务例程→恢复现场→返回。类型包括：I/O中断处理、时钟中断处理、硬件故障中断处理、程序性中断处理。"},
+{id:"7.4.1",section:"7.4.1",title:"磁盘结构和管理",keywords:["磁盘结构","磁盘","磁道","扇区","柱面","盘片","磁盘访问时间"],content:"磁盘由盘片、磁头、磁道、扇区、柱面组成。磁盘访问时间=寻道时间+旋转延迟+传输时间。磁盘地址由柱面号、磁头号、扇区号确定。"},
+{id:"7.4.2",section:"7.4.2",title:"磁盘调度算法",keywords:["磁盘调度","磁盘调度算法","FCFS","SSTF","SCAN","C-SCAN","LOOK","C-LOOK","电梯调度"],content:"主要算法：FCFS（先来先服务）、SSTF（最短寻道时间优先）、SCAN（电梯算法）、C-SCAN（循环扫描）、LOOK、C-LOOK。目标是减少平均寻道时间。"},
+{id:"7.4.3",section:"7.4.3",title:"独立磁盘冗余阵列",keywords:["RAID","独立磁盘冗余阵列","磁盘阵列","RAID级别","RAID 0","RAID 1","RAID 5"],content:"RAID技术将多个磁盘组合成逻辑单元。RAID 0（条带化，无冗余）、RAID 1（镜像，50%空间浪费）、RAID 5（分布式奇偶校验，至少3盘）、RAID 6（双重奇偶校验，至少4盘）、RAID 10（1+0，高性能高冗余）。"},
+{id:"7.4.4",section:"7.4.4",title:"非易失性存储器",keywords:["非易失性存储器","NVM","SSD","闪存","Flash","NVMe","固态硬盘"],content:"NVM断电后仍保持数据。类型：闪存（NAND/NOR）、SSD、3D XPoint、NVMe SSD。SSD优势：低延迟、高IOPS、低功耗、抗震。劣势：写入寿命有限、成本较高。SSD不需要磁盘调度。"},
+{id:"7.5.1",section:"7.5.1",title:"缓冲技术",keywords:["缓冲","缓冲区","Buffer","缓冲技术","单缓冲","双缓冲","循环缓冲"],content:"缓冲用于缓和CPU与I/O设备速度不匹配。类型：单缓冲（CPU和设备交替工作）、双缓冲（实现并行）、循环缓冲（适合连续数据流）、缓冲池（多进程共享）。"},
+{id:"7.5.2",section:"7.5.2",title:"磁盘高速缓存",keywords:["磁盘高速缓存","磁盘缓存","Disk Cache","Buffer Cache","页缓存"],content:"磁盘高速缓存利用内存缓存磁盘数据。命中时直接从内存返回。替换算法：LRU（最近最少使用）、LFU（最不经常使用）、Clock算法。与缓冲的区别：缓存主要减少磁盘访问次数。"},
+{id:"7.5.3",section:"7.5.3",title:"提高磁盘I/O速度的其他方法",keywords:["提高磁盘I/O","提高I/O速度","I/O优化","预读","延迟写"],content:"方法包括：优化磁盘调度算法、预读（Read-Ahead）、延迟写（Deferred Write）、虚拟磁盘、优化文件布局、使用SSD、使用RAID技术、内存映射文件。"},
+{id:"8.1.1",section:"8.1.1",title:"文件类型",keywords:["文件类型","文件分类","普通文件","目录文件","特殊文件"],content:"按用途：系统文件、用户文件、库文件。按性质：普通文件、目录文件、特殊文件（字符特殊文件、块特殊文件）。按保护级别：只读、读写、可执行等。"},
+{id:"8.1.2",section:"8.1.2",title:"文件属性",keywords:["文件属性","文件信息","file attribute","文件元数据"],content:"文件属性包括：文件名、类型、大小、位置、创建时间、修改时间、访问时间、所有者、权限、标志等。存储在FCB或inode中。"},
+{id:"8.1.3",section:"8.1.3",title:"文件的操作",keywords:["文件操作","创建文件","删除文件","读写文件"],content:"基本文件操作：创建、删除、打开、关闭、读、写、定位（Seek）、截断、重命名。一般流程：打开文件→读/写文件→关闭文件。"},
+{id:"8.1.4",section:"8.1.4",title:"文件访问方式",keywords:["文件访问方式","顺序访问","随机访问","直接访问","索引顺序访问"],content:"顺序访问：按顺序逐一访问，实现简单但搜索慢。随机访问：通过块号直接访问任意记录，即时访问但实现复杂。索引顺序访问：基于顺序访问构建索引，搜索快且支持两种访问方式。"},
+{id:"8.2.1",section:"8.2.1",title:"文件结构",keywords:["文件结构","文件组织","无结构文件","有结构文件","流式文件","记录式文件"],content:"无结构文件（流式文件）：字节序列，Unix/Linux采用。有结构文件（记录式文件）：由记录组成，分为定长和变长记录。组织方式：顺序文件、索引文件、索引顺序文件、直接文件（散列文件）。"},
+{id:"8.2.2",section:"8.2.2",title:"有结构文件的组织",keywords:["有结构文件","记录式文件","顺序文件","索引文件","索引顺序文件","直接文件"],content:"顺序文件：记录按关键字排列，适合批量处理。索引文件：建立索引表支持快速随机访问。索引顺序文件：结合两者优点。直接文件：通过散列函数映射，访问时间接近O(1)。"},
+{id:"8.2.3",section:"8.2.3",title:"文件系统",keywords:["文件系统","file system","文件系统的作用","文件系统的功能"],content:"文件系统功能：存储空间管理、目录管理、读写管理、共享与保护、可靠性管理。层次：逻辑文件系统、文件组织模块、基本文件系统、I/O控制层。常见文件系统：FAT32、NTFS、exFAT、ext2/3/4、APFS。"},
+{id:"8.3.1",section:"8.3.1",title:"文件控制块和索引节点",keywords:["FCB","文件控制块","索引节点","inode","fcb和inode"],content:"FCB包含文件名、大小、物理地址、时间、权限等。Unix将FCB拆分：文件名和inode号放目录项，其余放inode。inode包含直接指针（10个）、单级间接指针、二级间接指针、三级间接指针。"},
+{id:"8.3.2",section:"8.3.2",title:"单级目录",keywords:["单级目录","flat directory"],content:"整个系统只有一个目录。优点：实现简单。缺点：不允许重名、检索效率低、不支持分类组织。仅适用于简单单用户系统。"},
+{id:"8.3.3",section:"8.3.3",title:"两级目录",keywords:["两级目录","主文件目录","用户文件目录","MFD","UFD"],content:"主文件目录（MFD）按用户名索引，用户文件目录（UFD）存放用户文件。优点：解决命名冲突、用户隔离。缺点：不能创建子目录、不支持共享。"},
+{id:"8.3.4",section:"8.3.4",title:"树形目录",keywords:["树形目录","多级目录","目录树","绝对路径","相对路径"],content:"树形结构，有根目录。文件通过路径名定位。路径分绝对路径和相对路径。还有无环图目录（支持共享）和通用图目录（允许循环）。优点：层次清晰、可重名、检索效率高、支持共享。"},
+{id:"8.3.5",section:"8.3.5",title:"目录的查询",keywords:["目录查询","目录检索","查找文件","按名存取"],content:"根据路径名逐级检索目录项。优化方法：分解法、缓存目录项（dentry cache）、哈希目录、B树/B+树索引、线性搜索。"},
+{id:"8.3.6",section:"8.3.6",title:"文件的共享",keywords:["文件共享","共享文件","硬链接","软链接","符号链接"],content:"硬链接：多个目录项指向同一inode，引用计数管理，不能跨文件系统。软链接：包含目标路径的特殊文件，可跨文件系统，目标删除后变成悬空链接。"},
+{id:"8.4.1",section:"8.4.1",title:"文件系统的格式",keywords:["文件系统格式","磁盘格式化","超级块"],content:"格式化包括物理格式化（划分扇区）、逻辑格式化（创建文件系统结构）、分区。典型布局：引导块→超级块→Inode位图→块位图→Inode表→数据区。"},
+{id:"8.4.2",section:"8.4.2",title:"文件的存储结构",keywords:["文件存储结构","连续分配","链接分配","索引分配","文件分配方法"],content:"连续分配：占用连续块，快但有碎片。链接分配：块链表，无外碎片但不支持随机访问（FAT改进）。索引分配：每个文件有索引块，支持随机访问，大文件需多级索引。"},
+{id:"8.4.3",section:"8.4.3",title:"空闲存储空间的管理",keywords:["空闲空间管理","位图法","空闲链表","成组链接"],content:"位图法：每位代表一个块，简单高效。链表法：空闲块链接，灵活但遍历慢。成组链接：第一个空闲块存储下一组地址，Unix采用。计数法：记录连续空闲块。"},
+{id:"8.5.1",section:"8.5.1",title:"坏块管理",keywords:["坏块管理","坏块","bad block","磁盘坏道"],content:"坏块管理策略：检测坏块（格式化时扫描）、标记坏块（加入坏块列表）、替换坏块（扇区备用、块备用、移位替换）。现代磁盘控制器自动处理坏块重映射。"},
+{id:"8.5.2",section:"8.5.2",title:"备份",keywords:["备份","完全备份","增量备份","差异备份"],content:"完全备份：备份所有数据，恢复简单但耗时。增量备份：只备份自上次备份以来的变化，备份快但恢复需依次恢复。差异备份：备份自上次完全备份以来的变化。"},
+{id:"8.5.3",section:"8.5.3",title:"文件系统一致性问题",keywords:["文件系统一致性","一致性","fsck","崩溃恢复","日志文件系统"],content:"不一致原因：操作需多次磁盘访问，崩溃时部分完成。解决方法：fsck（扫描修复）、日志文件系统（ext3/4、NTFS、XFS）、写时复制（ZFS、Btrfs）。日志类型：元数据日志、数据日志、有序日志。"},
+{id:"8.5.4",section:"8.5.4",title:"数据一致性控制",keywords:["数据一致性控制","并发一致性","数据一致性","原子操作"],content:"控制方法：文件锁（共享锁/排他锁）、原子操作、事务机制、写时复制、快照、缓存一致性协议。Unix提供最终一致性保证。"},
+{id:"8.6.1",section:"8.6.1",title:"保护域",keywords:["保护域","protection domain","访问控制","unix权限"],content:"保护域是进程可访问资源的集合，由<对象,权限>对组成。实现方式：基于用户（UID/GID）、基于进程、基于角色（RBAC）。Unix权限分三组：owner、group、others，各有rwx权限。"},
+{id:"8.6.2",section:"8.6.2",title:"保护矩阵的实现",keywords:["保护矩阵","protection matrix","ACL","能力表","capability"],content:"保护矩阵行代表主体，列代表客体。实现方式：ACL（按列存储，每个客体关联权限列表）、能力表（按行存储，每个主体关联可访问资源列表）。ACL适合文件系统，能力表适合分布式系统。"},
+{id:"8.6.3",section:"8.6.3",title:"分级安全管理",keywords:["分级安全管理","安全级别","多级安全","Bell-LaPadula","Biba"],content:"分级原则：高级别可访问低级别，低级别不能访问高级别。安全级别：系统级、用户级、组级、公共级。Bell-LaPadula模型（保护机密性）：不能上读、不能下写。Biba模型（保护完整性）：不能下读、不能上写。"}
 ];
 
-// Stop words for Chinese text processing
-const stopWords = new Set(["的","了","是","在","和","与","或","有","这","那","什么","哪些","怎么","如何","为什么","一个","一些","一下","呢","吗","吧","啊","哦","嗯","对","不","没有","请","帮","问","告诉","说","讲","关于","对于","能","可以","会","让","给","把","被","从","到","向","往","以","而","但","如果","因为","所以","虽然","然而","因此","于是","然后","接着","再","又","也","还","都","全","只","仅","就","才","已经","正在","将要","应该","必须","可能","大概","也许","差不多","几乎","非常","很","太","真","好","挺","十分","特别","尤其","更加","越","最","极","比较","相对","绝对","完全","全部","所有","每个","任何","某","某些","各","各个","各自","每","一切","整个"]);
+// API configuration
+let apiKey = localStorage.getItem('zhipu_api_key') || '';
+const API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
+const MODEL = 'glm-4-flash';
 
-// Build inverted index
-const keywordIndex = {};
-const synonymIndex = {};
-knowledgeBase.forEach(kp => {
-kp.keywords.forEach(kw => {
-const key = kw.toLowerCase();
-if (!keywordIndex[key]) keywordIndex[key] = [];
-keywordIndex[key].push(kp.id);
-});
-kp.synonyms.forEach(syn => {
-const key = syn.toLowerCase();
-if (!synonymIndex[key]) synonymIndex[key] = [];
-synonymIndex[key].push(kp.id);
-});
-});
-
-// Build document vectors for TF-IDF
-function tokenize(text) {
-const cleaned = text.replace(/<[^>]*>/g, ' ').replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, ' ');
-return cleaned.split(/\s+/).filter(w => w.length > 0 && !stopWords.has(w));
-}
-
-const docVectors = {};
-const idfCache = {};
-const totalDocs = knowledgeBase.length;
-
-knowledgeBase.forEach(kp => {
-const tokens = tokenize(kp.title + ' ' + kp.keywords.join(' ') + ' ' + kp.synonyms.join(' ') + ' ' + kp.content);
-docVectors[kp.id] = tokens;
-tokens.forEach(t => {
-idfCache[t] = (idfCache[t] || 0) + 1;
-});
-});
-
-Object.keys(idfCache).forEach(t => {
-idfCache[t] = Math.log(totalDocs / idfCache[t]);
-});
-
-function cosineSimilarity(queryTokens, docTokens) {
-const tf1 = {}, tf2 = {};
-queryTokens.forEach(t => { tf1[t] = (tf1[t] || 0) + 1; });
-docTokens.forEach(t => { tf2[t] = (tf2[t] || 0) + 1; });
-const allTerms = new Set([...Object.keys(tf1), ...Object.keys(tf2)]);
-let dot = 0, norm1 = 0, norm2 = 0;
-allTerms.forEach(t => {
-const v1 = (tf1[t] || 0) * (idfCache[t] || 0);
-const v2 = (tf2[t] || 0) * (idfCache[t] || 0);
-dot += v1 * v2;
-norm1 += v1 * v1;
-norm2 += v2 * v2;
-});
-if (norm1 === 0 || norm2 === 0) return 0;
-return dot / (Math.sqrt(norm1) * Math.sqrt(norm2));
-}
-
-function findBestMatch(query) {
+// Build context from knowledge base
+function buildContext(query) {
 const queryLower = query.toLowerCase();
-const queryTokens = tokenize(query);
-
-// Tier 1: Exact keyword match
-for (const kw of Object.keys(keywordIndex)) {
-if (queryLower.includes(kw)) {
-const ids = keywordIndex[kw];
-return knowledgeBase.find(kp => kp.id === ids[0]);
-}
-}
-
-// Tier 2: Synonym match
-for (const syn of Object.keys(synonymIndex)) {
-if (queryLower.includes(syn)) {
-const ids = synonymIndex[syn];
-return knowledgeBase.find(kp => kp.id === ids[0]);
-}
-}
-
-// Tier 3: TF-IDF cosine similarity
-let bestScore = 0;
-let bestKp = null;
-knowledgeBase.forEach(kp => {
-const score = cosineSimilarity(queryTokens, docVectors[kp.id]);
-if (score > bestScore) {
-bestScore = score;
-bestKp = kp;
-}
+const relevantKPs = knowledgeBase.filter(kp => {
+return kp.keywords.some(kw => queryLower.includes(kw.toLowerCase())) ||
+queryLower.includes(kp.title.toLowerCase());
 });
 
-if (bestScore > 0.05) return bestKp;
+let context = '你是一个《操作系统》课程的知识问答助手。请根据以下知识点回答学生的问题。\n\n';
+if (relevantKPs.length > 0) {
+context += '相关知识点：\n';
+relevantKPs.slice(0, 8).forEach(kp => {
+context += `【${kp.section} ${kp.title}】${kp.content}\n\n`;
+});
+} else {
+context += '以下是《操作系统》课程第7章（设备管理）和第8章（文件管理）的主要知识点概要：\n';
+knowledgeBase.forEach(kp => {
+context += `【${kp.section} ${kp.title}】${kp.content.substring(0, 100)}...\n`;
+});
+}
+context += '\n请根据上述知识点，用清晰易懂的方式回答学生的问题。如果问题超出知识点范围，请基于操作系统课程的标准知识进行回答。回答时请包含必要的概念解释、对比分析和实例说明。';
+return context;
+}
+
+async function callZhipuAPI(query) {
+if (!apiKey) {
 return null;
+}
+
+const context = buildContext(query);
+const messages = [
+{ role: 'system', content: context },
+{ role: 'user', content: query }
+];
+
+const response = await fetch(API_URL, {
+method: 'POST',
+headers: {
+'Authorization': `Bearer ${apiKey}`,
+'Content-Type': 'application/json'
+},
+body: JSON.stringify({
+model: MODEL,
+messages: messages,
+temperature: 0.7,
+max_tokens: 2048
+})
+});
+
+if (!response.ok) {
+if (response.status === 401) {
+throw new Error('API Key无效，请在设置中检查您的API Key');
+}
+throw new Error(`API调用失败: ${response.status}`);
+}
+
+const data = await response.json();
+return data.choices[0].message.content;
+}
+
+// UI logic
+let currentChapter = '7';
+const quickTopics7 = ["四种I/O控制方式比较","什么是DMA控制方式","磁盘调度算法有哪些","SPOOLing技术的作用","RAID级别有哪些","缓冲的类型"];
+const quickTopics8 = ["FCB和inode的区别","文件共享的方式","文件系统一致性","保护矩阵的实现","文件分配方法比较","目录结构类型"];
+
+function renderQuickTopics() {
+const container = document.getElementById('quickTopics');
+const topics = currentChapter === '7' ? quickTopics7 : quickTopics8;
+container.innerHTML = topics.map(t => `<span class="quick-topic" onclick="askQuestion('${t}')">${t}</span>`).join('');
+}
+
+function askQuestion(text) {
+document.getElementById('userInput').value = text;
+handleQuery();
+}
+
+function addSystemMessage(content, isHtml = false) {
+const chatArea = document.getElementById('chatArea');
+const welcome = chatArea.querySelector('.welcome');
+if (welcome) welcome.remove();
+
+const msg = document.createElement('div');
+msg.className = 'message system';
+msg.innerHTML = `<div class="message-bubble">
+<div class="content">${isHtml ? content : formatMarkdown(content)}</div>
+</div>`;
+chatArea.appendChild(msg);
+chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function addUserMessage(text) {
+const chatArea = document.getElementById('chatArea');
+const msg = document.createElement('div');
+msg.className = 'message user';
+msg.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
+chatArea.appendChild(msg);
+chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function addLoadingMessage() {
+const chatArea = document.getElementById('chatArea');
+const msg = document.createElement('div');
+msg.className = 'message system';
+msg.id = 'loadingMsg';
+msg.innerHTML = `<div class="message-bubble">
+<div class="content"><div class="loading-dots"><span></span><span></span><span></span></div> 思考中...</div>
+</div>`;
+chatArea.appendChild(msg);
+chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function removeLoadingMessage() {
+const loading = document.getElementById('loadingMsg');
+if (loading) loading.remove();
+}
+
+function formatMarkdown(text) {
+return text
+.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+.replace(/\*(.*?)\*/g, '<em>$1</em>')
+.replace(/`(.*?)`/g, '<code>$1</code>')
+.replace(/\n/g, '<br>');
+}
+
+function escapeHtml(text) {
+const div = document.createElement('div');
+div.textContent = text;
+return div.innerHTML;
+}
+
+async function handleQuery() {
+const input = document.getElementById('userInput');
+const text = input.value.trim();
+if (!text) return;
+input.value = '';
+
+const sendBtn = document.getElementById('sendBtn');
+sendBtn.disabled = true;
+
+addUserMessage(text);
+addLoadingMessage();
+
+try {
+const answer = await callZhipuAPI(text);
+removeLoadingMessage();
+if (answer) {
+addSystemMessage(answer);
+} else {
+addSystemMessage('请先在设置中配置智谱AI API Key。\n\n获取方式：\n1. 访问 https://bigmodel.cn\n2. 注册并登录\n3. 在 API Keys 页面创建API Key\n4. 点击页面右上角⚙️图标，输入API Key并保存', true);
+}
+} catch (error) {
+removeLoadingMessage();
+addSystemMessage(`❌ ${error.message}`, true);
+} finally {
+sendBtn.disabled = false;
+input.focus();
+}
+}
+
+function toggleSettings() {
+const panel = document.getElementById('settingsPanel');
+panel.classList.toggle('show');
+if (panel.classList.contains('show')) {
+document.getElementById('apiKeyInput').value = apiKey;
+}
+}
+
+function saveApiKey() {
+apiKey = document.getElementById('apiKeyInput').value.trim();
+localStorage.setItem('zhipu_api_key', apiKey);
+document.getElementById('settingsPanel').classList.remove('show');
+if (apiKey) {
+alert('API Key已保存');
+} else {
+alert('API Key已清除');
+}
 }
 
 // Disk scheduling calculator
 function calculateDiskScheduling(requests, headStart, direction, algorithm) {
 const sorted = [...requests].sort((a, b) => a - b);
-const maxCylinder = Math.max(...requests, headStart) + (200 - Math.max(...requests, headStart));
 let order = [], totalMove = 0, current = headStart;
 const remaining = [...requests];
 
@@ -1170,7 +344,6 @@ case 'FCFS':
 order = [headStart, ...requests];
 for (let i = 1; i < order.length; i++) totalMove += Math.abs(order[i] - order[i-1]);
 break;
-
 case 'SSTF':
 order = [headStart];
 while (remaining.length > 0) {
@@ -1185,7 +358,6 @@ order.push(current);
 remaining.splice(nearest, 1);
 }
 break;
-
 case 'SCAN':
 order = [headStart];
 const goUp = direction === 'up';
@@ -1202,7 +374,6 @@ if (order[order.length-1] !== 0) { order.push(0); totalMove += Math.abs(0 - orde
 for (const r of right.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
 }
 break;
-
 case 'C-SCAN':
 order = [headStart];
 const goUpC = direction === 'up';
@@ -1221,7 +392,6 @@ order.push(0);
 for (const r of rightC.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
 }
 break;
-
 case 'LOOK':
 order = [headStart];
 const goUpL = direction === 'up';
@@ -1235,7 +405,6 @@ for (const r of leftL) { order.push(r); totalMove += Math.abs(order[order.length
 for (const r of rightL.reverse()) { order.push(r); totalMove += Math.abs(order[order.length-1] - order[order.length-2]); }
 }
 break;
-
 case 'C-LOOK':
 order = [headStart];
 const goUpCL = direction === 'up';
@@ -1260,89 +429,7 @@ for (let i = rightCL.length - 2; i >= 0; i--) { order.push(rightCL[i]); totalMov
 }
 break;
 }
-
 return { order, totalMove };
-}
-
-// UI logic
-let currentChapter = '7';
-const quickTopics7 = ["什么是DMA控制方式","磁盘调度算法有哪些","SPOOLing技术的作用","四种I/O控制方式比较","RAID级别有哪些"];
-const quickTopics8 = ["FCB和inode的区别","文件共享的方式","文件系统一致性","保护矩阵的实现","文件分配方法比较"];
-
-function renderQuickTopics() {
-const container = document.getElementById('quickTopics');
-const topics = currentChapter === '7' ? quickTopics7 : quickTopics8;
-container.innerHTML = topics.map(t => `<span class="quick-topic" onclick="askQuestion('${t}')">${t}</span>`).join('');
-}
-
-function askQuestion(text) {
-document.getElementById('userInput').value = text;
-handleQuery();
-}
-
-function showKnowledgePoint(id) {
-const kp = knowledgeBase.find(k => k.id === id);
-if (!kp) return;
-addSystemMessage(kp);
-}
-
-function addSystemMessage(kp) {
-const chatArea = document.getElementById('chatArea');
-const welcome = chatArea.querySelector('.welcome');
-if (welcome) welcome.remove();
-
-const msg = document.createElement('div');
-msg.className = 'message system';
-msg.innerHTML = `<div class="message-bubble">
-<div class="section-ref">${kp.section}</div>
-<div class="title">${kp.title}</div>
-<div class="content">${kp.content}</div>
-</div>`;
-chatArea.appendChild(msg);
-chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-function addUserMessage(text) {
-const chatArea = document.getElementById('chatArea');
-const msg = document.createElement('div');
-msg.className = 'message user';
-msg.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
-chatArea.appendChild(msg);
-chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-function addNoMatchMessage() {
-const chatArea = document.getElementById('chatArea');
-const msg = document.createElement('div');
-msg.className = 'message system';
-msg.innerHTML = `<div class="message-bubble">
-<div class="content"><p class="no-match">抱歉，我暂时没有找到与您问题相关的知识点。</p>
-<p>建议您：</p>
-<ul><li>尝试使用更具体的关键词</li><li>使用课程中的标准术语提问</li><li>参考热门话题</li></ul></div>
-</div>`;
-chatArea.appendChild(msg);
-chatArea.scrollTop = chatArea.scrollHeight;
-}
-
-function escapeHtml(text) {
-const div = document.createElement('div');
-div.textContent = text;
-return div.innerHTML;
-}
-
-function handleQuery() {
-const input = document.getElementById('userInput');
-const text = input.value.trim();
-if (!text) return;
-input.value = '';
-addUserMessage(text);
-
-const result = findBestMatch(text);
-if (result) {
-addSystemMessage(result);
-} else {
-addNoMatchMessage();
-}
 }
 
 function showDiskCalc() {
@@ -1452,6 +539,15 @@ chatArea.innerHTML = `<div class="welcome">
 </div>`;
 renderQuickTopics();
 });
+});
+
+// Close settings when clicking outside
+document.addEventListener('click', function(e) {
+const panel = document.getElementById('settingsPanel');
+const btn = document.querySelector('.settings-btn');
+if (!panel.contains(e.target) && e.target !== btn) {
+panel.classList.remove('show');
+}
 });
 
 // Initialize

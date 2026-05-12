@@ -84,6 +84,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hira
 </div>
 
 <script>
+const PROXY_URL = 'https://oscourseq-a-proxy.onrender.com';
+
 const knowledgeBase = [
 {id:"7.1.1",section:"7.1.1",title:"I/O管理的功能",keywords:["I/O管理","I/O管理功能","IO管理","输入输出管理","管理功能"],content:"I/O管理的主要功能包括：设备分配与回收、缓冲区管理、设备驱动、错误处理、提供用户接口。目标是提高I/O速度、方便用户使用、实现设备无关性。"},
 {id:"7.1.2",section:"7.1.2",title:"I/O硬件组成",keywords:["I/O硬件","I/O硬件组成","IO硬件","输入输出硬件","硬件组成"],content:"I/O系统由I/O设备、设备控制器、I/O通道、总线、I/O端口组成。I/O通信方式有专用指令I/O和内存映射I/O。"},
@@ -131,9 +133,6 @@ const knowledgeBase = [
 {id:"8.6.2",section:"8.6.2",title:"保护矩阵的实现",keywords:["保护矩阵","protection matrix","ACL","能力表","capability"],content:"保护矩阵行代表主体，列代表客体。实现方式：ACL（按列存储，每个客体关联权限列表）、能力表（按行存储，每个主体关联可访问资源列表）。ACL适合文件系统，能力表适合分布式系统。"},
 {id:"8.6.3",section:"8.6.3",title:"分级安全管理",keywords:["分级安全管理","安全级别","多级安全","Bell-LaPadula","Biba"],content:"分级原则：高级别可访问低级别，低级别不能访问高级别。安全级别：系统级、用户级、组级、公共级。Bell-LaPadula模型（保护机密性）：不能上读、不能下写。Biba模型（保护完整性）：不能下读、不能上写。"}
 ];
-
-// 代理服务器URL - 部署后修改为你的代理服务器地址
-const PROXY_URL = 'https://oscourseq-a.onrender.com';
 
 function buildContext(query) {
 const queryLower = query.toLowerCase();

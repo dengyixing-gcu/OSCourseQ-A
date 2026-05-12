@@ -17,49 +17,34 @@
 3. 点击发送或按回车键获取答案
 4. 点击顶部标签切换章节（设备管理/文件管理/磁盘调度计算）
 
-## 部署架构
+## 部署方式
 
-```
-前端 (GitHub Pages)          代理服务器 (Render/Railway)
-┌─────────────────┐         ┌─────────────────────────┐
-│   index.html    │ ──POST──▶ │  Flask Proxy Server     │
-│   纯静态页面     │         │  ZHIPU_API_KEY (环境变量) │
-└─────────────────┘         └──────────┬──────────────┘
-                                       │ POST
-                                       ▼
-                              ┌─────────────────────────┐
-                              │   智谱AI API             │
-                              │   open.bigmodel.cn       │
-                              └─────────────────────────┘
-```
+### 方案一：直接使用（推荐）
 
-## 代理服务器部署
+API Key 已加密存储在 `index.html` 中，用户无法通过查看源码直接获取。
 
-API Key通过代理服务器安全保管，不暴露在前端代码中。
+1. 访问 GitHub Pages 地址：`https://dengyixing-gcu.github.io/OSCourseQ-A/`
+2. 或下载 `index.html` 本地打开使用
 
-### 快速部署到Render（免费）
-
-1. 访问 https://render.com 注册账号
-2. 点击 "New +" → "Web Service"
-3. 连接GitHub仓库 `OSCourseQ-A`
-4. 配置：
-   - **Root Directory**: `proxy`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn server:app`
-   - **Environment Variables**: 添加 `ZHIPU_API_KEY` = 你的API Key
-5. 部署完成后，复制服务URL
-6. 修改 `index.html` 第146行的 `PROXY_URL` 为你的代理服务器URL
-
-### 本地运行（开发测试）
+### 方案二：本地运行（开发测试）
 
 ```bash
-cd proxy
-pip install -r requirements.txt
-export ZHIPU_API_KEY="你的API Key"
-python server.py
+# 方式1：直接打开
+open index.html
+
+# 方式2：使用本地服务器
+python -m http.server 8000
+# 访问 http://localhost:8000
 ```
 
-详细部署说明见 [proxy/README.md](proxy/README.md)
+### 更换 API Key（可选）
+
+如果需要更换 API Key，运行加密脚本：
+
+```bash
+python encrypt_key.py "你的新API Key"
+# 将输出的加密字符串替换到 index.html 的 CONFIG.ENCRYPTED_KEY 中
+```
 
 ## 知识覆盖
 

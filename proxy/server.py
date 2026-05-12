@@ -1,8 +1,10 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 API_KEY = os.environ.get('ZHIPU_API_KEY')
 API_URL = 'https://open.bigmodel.cn/api/paas/v4/chat/completions'

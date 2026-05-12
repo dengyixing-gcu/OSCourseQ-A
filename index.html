@@ -306,7 +306,28 @@ if (e.key === 'Enter') handleQuery();
 });
 
 document.querySelectorAll('.tab').forEach(tab => {
-function calculateDiskScheduling(requests, headStart, direction, algorithm) {
+tab.addEventListener('click', function() {
+document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+this.classList.add('active');
+currentChapter = this.dataset.chapter;
+const chatArea = document.getElementById('chatArea');
+chatArea.innerHTML = '';
+
+if (currentChapter === 'calc') {
+showDiskCalc();
+return;
+}
+
+chatArea.innerHTML = `<div class="welcome">
+<h2>${currentChapter === '7' ? '设备管理' : '文件管理'}知识问答</h2>
+<p>请输入您的问题，或点击下方热门话题快速开始</p>
+<div class="quick-topics" id="quickTopics"></div>
+</div>`;
+renderQuickTopics();
+});
+});
+
+// Disk scheduling calculator
 const sorted = [...requests].sort((a, b) => a - b);
 let order = [], totalMove = 0, current = headStart;
 const remaining = [...requests];
